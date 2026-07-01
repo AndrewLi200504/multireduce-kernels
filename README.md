@@ -5,8 +5,9 @@ This project aims to perform multiple reductions over vectors to avoid redundant
 ## Instructions to run
 
 Ensure you have an NVIDIA CUDA GPU. 
-`cd multireduce_kernels`
-`python -m venv venv`
-`pip install -e . --no-build-isolation`
-`pip install torch --index-url https://download.pytorch.org/whl/YOUR_WHL_HERE` 
-`pip install setuptools`
+- `cd multireduce_kernels`
+- `python -m venv venv`
+- `source venv/bin/activate`
+- `pip install torch --index-url https://download.pytorch.org/whl/YOUR_WHL_HERE` 
+- `pip install setuptools`
+- `pip install -e . --no-build-isolation`

@@ -1,8 +1,8 @@
 #include <cfloat>
 #include <stdio.h>
-
 #define BLOCK_SIZE 256
 #define WARP_SIZE 32
+
 
 template<typename T>
 struct dual_reduction {
@@ -10,21 +10,21 @@ struct dual_reduction {
     T red1;
 };
 
-template<typename T> __device__ T dev_nop(T a) { return a; }
-template<typename T> __device__ T dev_sqr(T a) { return a * a; }
-template<typename T> __device__ T dev_min(T a, T b) { return a < b ? a : b; }
-template<typename T> __device__ T dev_max(T a, T b) { return a > b ? a : b; }
-template<typename T> __device__ T dev_sum(T a, T b) { return a + b; }
+template<typename T> __device__ __forceinline__ T dev_nop(T a) { return a; }
+template<typename T> __device__ __forceinline__ T dev_sqr(T a) { return a * a; }
+template<typename T> __device__ __forceinline__ T dev_min(T a, T b) { return a < b ? a : b; }
+template<typename T> __device__ __forceinline__ T dev_max(T a, T b) { return a > b ? a : b; }
+template<typename T> __device__ __forceinline__ T dev_sum(T a, T b) { return a + b; }
+
 
 template<typename T, T (*Op0)(T, T), T (*Op1)(T, T)>
 __device__ __forceinline__ dual_reduction<T> warp_reduce_dual(dual_reduction<T> dr) {
-    for (int offset = 16; offset > 0; offset /= 2) {
+    for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
         dr.red0 = Op0(dr.red0, __shfl_down_sync(0xffffffff, dr.red0, offset));
         dr.red1 = Op1(dr.red1, __shfl_down_sync(0xffffffff, dr.red1, offset));
     }
     return dr;
 }
-
 
 template<typename T, T (*Map0) (T), T (*Map1) (T), T (*Op0)(T, T), T (*Op1)(T, T)>
 __global__ void dual_reduction_kernel(const T* a, dual_reduction<T>* blockdrs,

@@ -107,27 +107,22 @@ void dual_reduction_launcher(const T* data, T* out0, T* out1, int n,
     dual_reduction_kernel<T, Map0, Map1, Op0, Op1><<<num_blocks, BLOCK_SIZE>>>(
         data, device_output, current_n, identity0, identity1);
 
-    dual_reduction<T>* intermediate = device_output;
     current_n = num_blocks;
 
     while (current_n > BLOCK_SIZE) {
         num_blocks = (current_n + BLOCK_SIZE - 1) / BLOCK_SIZE;
-        dual_reduction<T>* next_output;
-        cudaMalloc(&next_output, num_blocks * sizeof(dual_reduction<T>));
+        
         dual_reduction_kernel_packed<T, Op0, Op1><<<num_blocks, BLOCK_SIZE>>>(
-            intermediate, next_output, current_n, identity0, identity1);
-        cudaFree(intermediate);
-        intermediate = next_output;
+            device_output, device_output, current_n, identity0, identity1);
+        
         current_n = num_blocks;
     }
 
-    dual_reduction<T>* final_output;
-    cudaMalloc(&final_output, sizeof(dual_reduction<T>));
+   
     dual_reduction_kernel_packed<T, Op0, Op1><<<1, BLOCK_SIZE>>>(
-        intermediate, final_output, current_n, identity0, identity1);
-    cudaFree(intermediate);
+        device_output, device_output, current_n, identity0, identity1);
 
-    cudaMemcpy(out0, &final_output->red0, sizeof(T), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(out1, &final_output->red1, sizeof(T), cudaMemcpyDeviceToDevice);
-    cudaFree(final_output);
+    cudaMemcpy(out0, &device_output[0].red0, sizeof(T), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(out1, &device_output[0].red1, sizeof(T), cudaMemcpyDeviceToDevice);
+    cudaFree(device_output);
 }

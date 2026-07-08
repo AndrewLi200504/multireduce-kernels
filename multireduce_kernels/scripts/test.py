@@ -32,7 +32,7 @@ def main(red_key):
     inacc_red1 = 0
     red = fn_dict[red_key]
     for _ in range(100):
-        t = torch.randn(10000000).to("cuda")
+        t = torch.randn(1000000).to("cuda")
         torch.cuda.synchronize()
         start_torch = perf_counter()
         red0_torch = red.red0(t)

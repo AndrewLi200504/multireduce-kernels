@@ -64,12 +64,30 @@ std::tuple<torch::Tensor, torch::Tensor> max_argmax_binding(torch::Tensor input)
     );
     return {max, argmax};
 }
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> asq_ab_bsq_binding(torch::Tensor input0, torch::Tensor input1) {
+    TORCH_CHECK(input0.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input1.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input0.numel() == input1.numel(), "tensors must be the same length");
+    auto asumsq = torch::empty({1}, input0.options());
+    auto absum = torch::empty({1}, input0.options());
+    auto bsumsq = torch::empty({1}, input0.options());
+    asq_ab_bsq_launcher(
+        input0.data_ptr<float>(),
+        input1.data_ptr<float>(),
+        asumsq.data_ptr<float>(),
+        absum.data_ptr<float>(),
+        bsumsq.data_ptr<float>(),
+        input0.numel()
+    );
+    return {asumsq, absum, bsumsq};
+}
 
 PYBIND11_MODULE(multireduce_kernels, m) {
     m.def("min_max", &min_max_binding, "Return min and max");
     m.def("sum_sumsq", &sum_sumsq_binding, "Return sum and sum of squares");
     m.def("min_argmin", &min_argmin_binding, "Return min and argmin");
     m.def("max_argmax", &max_argmax_binding, "Return max and argmax");
+    m.def("asq_ab_bsq", &asq_ab_bsq_binding, "Return sum of squares and elementwise products");
 }
 
 

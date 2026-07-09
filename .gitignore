@@ -1,2 +1,4 @@
 venv/
 *.so
+.nsys-rep
+.sqlite

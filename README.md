@@ -1,6 +1,6 @@
 ## Multireduce Kernels
 
-This project aims to perform multiple reductions over vectors to avoid redundant passes over the same vector. For example, in standard torch, in order to get the min and the max with `torch.max()` and `torch.min()`, you have to pass over the same input tensor twice. This makes a composite operation (calculate both min and max) that should take roughly the same amount of time as simply using one of the individual kernels (just min or just max) take twice as long to run. 
+This project aims to perform multiple reductions over vectors to avoid redundant passes over the same vector. For example, in standard torch, in order to get the min and the max with `torch.max()` and `torch.min()`, you have to pass over the same input tensor twice. This makes a simultaneous reduction operation (calculate both min and max of a tensor, `t`) that should take roughly the same amount of time as simply using one of the individual kernels (just min or just max of `t`) take twice as long to run. 
 
 ## Instructions to run
 

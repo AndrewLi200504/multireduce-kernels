@@ -30,6 +30,11 @@ void max_argmax_launcher(float* data, float* max, uint64_t* ind, int n) {
         data, max, ind, n, -FLT_MAX, UINT64_MAX);
 }
 
+void a_ab_b_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, int n) {
+    triple_reduction_launcher<float, dev_nop<float>, dev_mult<float>, dev_nop<float>,
+    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asum, absum, bsum, n, 0.0f, 0.0f);
+}
+
 void asq_ab_bsq_launcher(float* data0, float* data1, float* asumsq, float* absum, float* bsumsq, int n) {
     triple_reduction_launcher<float, dev_sqr<float>, dev_mult<float>, dev_sqr<float>, 
     dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asumsq, absum, bsumsq, n, 0.0f, 0.0f);

@@ -14,9 +14,8 @@ def timeit():
     yield
     end = perf_counter()
     print(f"Elapsed time: {end - start:.2f} seconds")
-
 def sumsq(t):
-    return torch.sum(t ** 2)
+    return (t ** 2).sum()
 
 
 def cos_sim(t0, t1): 

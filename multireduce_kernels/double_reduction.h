@@ -16,7 +16,6 @@ template<typename T> __device__ __forceinline__ T dev_min(T a, T b) { return a <
 template<typename T> __device__ __forceinline__ T dev_max(T a, T b) { return a > b ? a : b; }
 template<typename T> __device__ __forceinline__ T dev_sum(T a, T b) { return a + b; }
 
-
 template<typename T, T (*Op0)(T, T), T (*Op1)(T, T)>
 __device__ __forceinline__ dual_reduction<T> warp_reduce_dual(dual_reduction<T> dr) {
     for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {

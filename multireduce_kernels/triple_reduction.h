@@ -12,6 +12,7 @@ struct triple_reduction {
 };
 
 template<typename T> __device__ __forceinline__ T dev_mult(T a, T b) { return a * b; }
+template<typename T> __device__ __forceinline__ T dev_mult_sqrt(T a, T b) { return sqrt(a) * sqrt(b); }
 
 template<typename T, T (*Op0)(T, T), T (*Op1)(T, T), T (*Op2)(T, T)>
 __device__ __forceinline__ triple_reduction<T> warp_reduce_triple(triple_reduction<T> tr) {

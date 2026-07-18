@@ -63,7 +63,8 @@ class TripleReduction(NamedTuple):
 #TripleReduction = namedtuple('TripleReduction', ['original', 'fusedred', 'mk_reducer'])
 triple_red_dict: dict[str, TripleReduction] = {
     "cosine_similarity": TripleReduction(original=cos_sim, fusedred=mk.asq_ab_bsq, mk_reducer=mk_cos_sim),
-    "covariance": TripleReduction(original=covariance, fusedred=mk.a_ab_b, mk_reducer=mk_covariance)
+    "covariance": TripleReduction(original=covariance, fusedred=mk.a_ab_b, mk_reducer=mk_covariance),
+    "l2_norm": TripleReduction(original=l2_norm, fusedred=mk.asq_ab_bsq, mk_reducer=mk_l2_norm)
 }
 def double_red(red_key):
 
@@ -135,7 +136,7 @@ def triple_red(red_key):
     pass
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("red_key", help="Fused double_red_dict to use") 
+    parser.add_argument("red_key", help="Fused red_dict to use") 
     args = parser.parse_args()
     if args.red_key in double_red_dict: 
         double_red(args.red_key)

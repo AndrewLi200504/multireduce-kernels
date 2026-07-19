@@ -2,4 +2,4 @@ venv/
 *.so
 .nsys-rep
 .sqlite
-__pycache__/
+*.pyc

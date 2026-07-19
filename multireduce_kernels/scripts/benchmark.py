@@ -3,6 +3,8 @@ import torch
 import torch.nn.functional as F
 import multireduce_kernels as mk
 import inspect
+from torch_helpers import SPECIAL_REDS
+import mk_workloads as mkw
 from collections import namedtuple
 from dataclasses import dataclass, field
 
@@ -11,16 +13,6 @@ from contextlib import contextmanager
 from time import perf_counter
 
 
-def sumsq(t):
-    return (t ** 2).sum()
-def summul(t0, t1):
-    return (t0 * t1).sum()
-SPECIAL_REDS = {
-    "sumsq": sumsq,
-    "asq": sumsq,
-    "ab": summul,
-    "bsq": sumsq
-}
 
 def cast_if_long(mk_ret):
     return mk_ret.to(torch.long) if mk_ret.dtype is torch.uint64 else mk_ret
@@ -70,10 +62,16 @@ class Reduction:
             else:
                 fn =  getattr(torch, delim_str)
             self.torch_reds.append(fn)
-        self.mk_red = getattr(mk, str)
+        self.special_workload = False
+        if hasattr(mkw, str):
+            self.special_workload = True
+            self.mk_red = getattr(mkw, str)
+        else:
+            self.mk_red = getattr(mk, str)
+            
         self.acc_count = [0] * len(self.torch_reds) 
         self.tens_len = tens_len
-        self.num_tens_args = 2 if len(split) > 2 else 1
+        self.num_tens_args = 2 if len(split) > 2 or self.special_workload else 1
         self.num_it = num_it
 
     
@@ -93,7 +91,7 @@ class Reduction:
         single_red_idx = 0
         special_fns = [fn.__name__ for fn in SPECIAL_REDS.values()]
         for torch_red in self.torch_reds:
-            len_args = 1
+            len_args = -1
             if torch_red.__name__ in special_fns:
                 len_args = len(inspect.signature(torch_red).parameters)          
             if len_args == 1: 
@@ -101,9 +99,9 @@ class Reduction:
                     len_args = single_red_idx % 2
                     single_red_idx += 1
                 else:
-                    len_args = 2
+                    len_args = -1
             else: 
-                len_args = 2
+                len_args = -1
             tens_args_map.append(len_args)
         return tens_args_map
     def benchmark_one_it(self, tens_args_map: list):
@@ -115,7 +113,7 @@ class Reduction:
         mk_tuple = None
         for i, torch_red in enumerate(self.torch_reds):
             tens_idx = tens_args_map[i]
-            if tens_idx > 1:
+            if tens_idx < 0:
                 with self.timeit_and_synch(): 
                     ret = torch_red(*tens_tuple)
             else:

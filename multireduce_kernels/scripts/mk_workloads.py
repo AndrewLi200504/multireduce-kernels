@@ -1,5 +1,8 @@
 import multireduce_kernels as mk
 
+def samplevar(t): 
+    sum, sumsq = mk.sum_sumsq(t)
+    return (sumsq - sum ** 2 / t.numel()) / (t.numel() - 1)
 def cosinesim(t0, t1):
     asq, ab, bsq = mk.asq_ab_bsq(t0, t1)
     return ab / (asq.sqrt() * bsq.sqrt())

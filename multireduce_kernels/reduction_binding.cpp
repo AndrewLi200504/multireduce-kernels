@@ -118,6 +118,29 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> a_sqrtab_b_binding(torch
     );
     return {asum, sqrtabsum, bsum};
 }
+
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> a_ab_b_asq_binding(torch::Tensor input0, torch::Tensor input1) {
+    TORCH_CHECK(input0.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input1.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input0.numel() == input1.numel(), "tensors must be the same length");
+    auto asum = torch::empty({1}, input0.options());
+    auto absum = torch::empty({1}, input0.options());
+    auto bsum = torch::empty({1}, input0.options());
+    auto asumsq = torch::empty({1}, input0.options());
+
+    a_ab_b_asq_launcher(
+        input0.data_ptr<float>(),
+        input1.data_ptr<float>(),
+        asum.data_ptr<float>(),
+        absum.data_ptr<float>(),
+        bsum.data_ptr<float>(),
+        asumsq.data_ptr<float>(),
+        input0.numel()
+    );
+    return {asum, absum, bsum, asumsq};
+}
+
+
 PYBIND11_MODULE(multireduce_kernels, m) {
     m.def("min_max", &min_max_binding, "Return min and max");
     m.def("sum_sumsq", &sum_sumsq_binding, "Return sum and sum of squares");
@@ -126,6 +149,8 @@ PYBIND11_MODULE(multireduce_kernels, m) {
     m.def("a_ab_b", &a_ab_b_binding, "Return sum of elements and their products");
     m.def("asq_ab_bsq", &asq_ab_bsq_binding, "Return sum of squares and elementwise products");
     m.def("a_sqrtab_b", &a_sqrtab_b_binding, "Return sum of elements and their roots' products");
+    m.def("a_ab_b_asq", &a_ab_b_asq_binding, "Return sum of elements, their products, and one sums sum of squares");
+
 }
 
 

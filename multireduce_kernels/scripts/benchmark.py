@@ -62,16 +62,19 @@ class Reduction:
             else:
                 fn =  getattr(torch, delim_str)
             self.torch_reds.append(fn)
-        self.special_workload = False
+        special_workload = False
         if hasattr(mkw, str):
-            self.special_workload = True
+            special_workload = True
             self.mk_red = getattr(mkw, str)
         else:
             self.mk_red = getattr(mk, str)
             
         self.acc_count = [0] * len(self.torch_reds) 
         self.tens_len = tens_len
-        self.num_tens_args = 2 if len(split) > 2 or self.special_workload else 1
+        if special_workload: 
+            self.num_tens_args = len(inspect.signature(self.mk_red).parameters)
+        else:
+            self.num_tens_args = 2 if len(split) > 2 else 1
         self.num_it = num_it
 
     

@@ -134,7 +134,7 @@ if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("kernel", help="Fused multireduce kernel to benchmark") 
     parser.add_argument("size", help="Size of input tensor to use in benchmark")
-    args = parser.add_argument("num_it", help="Number of iterations to benchmark for")
+    parser.add_argument("num_it", help="Number of iterations to benchmark for")
     args = parser.parse_args()
     red = Reduction(args.kernel, int(args.size), int(args.num_it))
     red.benchmark()

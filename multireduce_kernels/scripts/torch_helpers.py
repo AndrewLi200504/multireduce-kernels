@@ -1,5 +1,7 @@
 import torch
 
+def sum(t):
+    return t.sum()
 def sumsq(t):
     return (t ** 2).sum()
 def summul(t0, t1):
@@ -15,6 +17,11 @@ def covariance(t0, t1):
     t1_centered = t1 - t1.mean()
     n = t0.numel()
     return torch.dot(t0_centered, t1_centered) / (n - 1)
+def olsslope(t0, t1):
+    t0_c = t0 - t0.mean()
+    t1_c = t1 - t1.mean()
+
+    return torch.dot(t0_c, t1_c) / torch.dot(t0_c, t0_c)
 SPECIAL_REDS = {
     "sumsq": sumsq,
     "asq": sumsq,
@@ -23,5 +30,8 @@ SPECIAL_REDS = {
     "samplevar": samplevar,
     "cosinesim": cosinesim,
     "l2norm": l2norm,
-    "covariance": covariance
+    "covariance": covariance,
+    "olsslope": olsslope,
+    "a": sum,
+    "b": sum
 }

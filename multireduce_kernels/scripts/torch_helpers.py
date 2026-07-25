@@ -6,6 +6,8 @@ def sumsq(t):
     return (t ** 2).sum()
 def summul(t0, t1):
     return (t0 * t1).sum()
+def summulsqrt(t0, t1):
+    return (t0.sqrt() * t1.sqrt()).sum()
 def samplevar(t): 
     return t.var()
 def cosinesim(t0, t1): 
@@ -22,16 +24,24 @@ def olsslope(t0, t1):
     t1_c = t1 - t1.mean()
 
     return torch.dot(t0_c, t1_c) / torch.dot(t0_c, t0_c)
+
+def union(t0, t1):
+    return (t0 | t1).sum()
+def intersection(t0, t1):
+    return (t0 & t1).sum()
 SPECIAL_REDS = {
     "sumsq": sumsq,
     "asq": sumsq,
     "ab": summul,
     "bsq": sumsq,
+    "sqrtab": summulsqrt,
     "samplevar": samplevar,
     "cosinesim": cosinesim,
     "l2norm": l2norm,
     "covariance": covariance,
     "olsslope": olsslope,
     "a": sum,
-    "b": sum
+    "b": sum,
+    "union": union,
+    "intersection": intersection
 }

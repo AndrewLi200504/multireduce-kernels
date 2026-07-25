@@ -1,15 +1,12 @@
 from argparse import ArgumentParser
 import torch
-import torch.nn.functional as F
 import multireduce_kernels as mk
 import inspect
 import json
 from torch_helpers import SPECIAL_REDS
 import mk_workloads as mkw
-from collections import namedtuple
-from dataclasses import dataclass, field
 
-from typing import Any, Callable, NamedTuple, Optional
+from typing import Any, Callable
 from contextlib import contextmanager
 from time import perf_counter
 
@@ -34,19 +31,16 @@ class TorchReduction():
     tuple_idx: int
     reduction: Callable[..., Any]
     timestep: float
+    name: str
     def args_filterer(func):
-        # if self.tuple_idx != -1:
-        #     i = self.tuple_idx
+      
         def wrapper(self, *args):
             if self.tuple_idx != -1:
                 i = self.tuple_idx
                 args = args[i: i + 1]
             result = func(self, *args)
             return result
-        # else:
-        #     def wrapper(self, *args):
-        #         result = func(self, *args)
-        #         return result
+       
                 
         return wrapper
     @args_filterer
@@ -60,6 +54,7 @@ class TorchReduction():
         self = cls()
         self.reduction = SPECIAL_REDS[fn_key] if fn_key in SPECIAL_REDS else getattr(torch, fn_key)
         self.tuple_idx = _dict[fn_key]
+        self.name = self.reduction.__name__
         return self
 
     @classmethod
@@ -67,10 +62,12 @@ class TorchReduction():
         self = cls()
         self.reduction = SPECIAL_REDS[string]
         self.tuple_idx = -1
+        self.name = string 
         return self
     def get_timestep(self):
         return self.timestep
-
+    def get_name(self):
+        return self.name
 class Benchmark:
     torch_total_time: int
     mk_total_time: int
@@ -132,8 +129,16 @@ class Benchmark:
         print(f"Average time on torch: {torch_avg_time}")
         print(f"Average time on mk: {mk_avg_time}")
         print(f"Speedup: {torch_avg_time / mk_avg_time:.2f}x")
+        failures = []
         for i, acc in enumerate(self.acc_count): 
-            print(f"{self.torch_reds[i].reduction.__name__} accuracy: {(acc / self.num_it) * 100:.2f}%")
+            red_accuracy = acc / self.num_it * 100
+            red_name = self.torch_reds[i].get_name()
+            print(f"{red_name} accuracy: {red_accuracy:.2f}%")
+            if red_accuracy < 50:
+                failures.append((red_name, red_accuracy))
+        return failures
+        
+        
     def benchmark_one_it(self):
         tens_tuple = tuple(
             self.tens_init_fn()

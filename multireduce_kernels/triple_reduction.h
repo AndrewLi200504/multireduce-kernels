@@ -27,7 +27,7 @@ __device__ __forceinline__ triple_reduction<T> warp_reduce_triple(triple_reducti
 
 template<typename T, T (*Map0)(T), T (*Map1)(T, T), T (*Map2)(T), T (*Op0)(T, T), T (*Op1)(T, T), T (*Op2)(T, T)>
 __global__ void triple_reduction_kernel(const T* a, const T* b, triple_reduction<T>* blocktrs,
-                                        int n, T identity0, T identity1) {
+                                        int n, T identity0, T identity1, T identity2) {
     int tid = threadIdx.x;
     int i = blockIdx.x * blockDim.x + tid;
     int lane = tid % WARP_SIZE;
@@ -36,7 +36,7 @@ __global__ void triple_reduction_kernel(const T* a, const T* b, triple_reduction
 
     __shared__ triple_reduction<T> sdata[NUM_WARPS];
 
-    triple_reduction<T> tr{identity0, Map1(identity0, identity1), identity1};
+    triple_reduction<T> tr{identity0, identity1, identity2};
     for (int k = 0; k < STRIDE; k++) {
         int currIdx = STRIDE * i + k;
         if (currIdx < n) {
@@ -45,8 +45,8 @@ __global__ void triple_reduction_kernel(const T* a, const T* b, triple_reduction
             tr.red2 = Op2(tr.red2, Map2(b[currIdx]));
         } else {
             tr.red0 = Op0(tr.red0, Map0(identity0));
-            tr.red1 = Op1(tr.red1, Map1(identity0, identity1));
-            tr.red2 = Op2(tr.red2, Map2(identity1));
+            tr.red1 = Op1(tr.red1, identity1);
+            tr.red2 = Op2(tr.red2, Map2(identity2));
         }
     }
 
@@ -55,7 +55,7 @@ __global__ void triple_reduction_kernel(const T* a, const T* b, triple_reduction
     __syncthreads();
 
     if (tid == 0) {
-        triple_reduction<T> final_tr{identity0, Map1(identity0, identity1), identity1};
+        triple_reduction<T> final_tr{identity0, identity1, identity2};
         for (int j = 0; j < NUM_WARPS; j++) {
             final_tr.red0 = Op0(final_tr.red0, sdata[j].red0);
             final_tr.red1 = Op1(final_tr.red1, sdata[j].red1);
@@ -65,10 +65,10 @@ __global__ void triple_reduction_kernel(const T* a, const T* b, triple_reduction
     }
 }
 
-template<typename T, T (*Map1)(T, T), T(*Op0)(T, T), T(*Op1)(T, T), T (*Op2)(T, T)>
+template<typename T, T(*Op0)(T, T), T(*Op1)(T, T), T (*Op2)(T, T)>
 __global__ void triple_reduction_kernel_packed(const triple_reduction<T>* a,
                                                triple_reduction<T>* blocktrs,
-                                               int n, T identity0, T identity1) {
+                                               int n, T identity0, T identity1, T identity2) {
     int tid = threadIdx.x;
     int i = blockIdx.x * blockDim.x + tid;
     int lane = tid % WARP_SIZE;
@@ -77,7 +77,7 @@ __global__ void triple_reduction_kernel_packed(const triple_reduction<T>* a,
 
     __shared__ triple_reduction<T> sdata[NUM_WARPS];
 
-    triple_reduction<T> tr{identity0, Map1(identity0, identity1), identity1};
+    triple_reduction<T> tr{identity0, identity1, identity2};
     for (int k = 0; k < STRIDE; k++) {
         int currIdx = STRIDE * i + k;
         if (currIdx < n) {
@@ -86,8 +86,8 @@ __global__ void triple_reduction_kernel_packed(const triple_reduction<T>* a,
             tr.red2 = Op2(tr.red2, a[currIdx].red2);
         } else {
             tr.red0 = Op0(tr.red0, identity0);
-            tr.red1 = Op1(tr.red1, Map1(identity0, identity1));
-            tr.red2 = Op2(tr.red2, identity1);
+            tr.red1 = Op1(tr.red1, identity1);
+            tr.red2 = Op2(tr.red2, identity2);
         }
     }
     triple_reduction<T> warp_tr = warp_reduce_triple<T, Op0, Op1, Op2>(tr);
@@ -95,7 +95,7 @@ __global__ void triple_reduction_kernel_packed(const triple_reduction<T>* a,
     __syncthreads();
 
     if (tid == 0) {
-        triple_reduction<T> final_tr{identity0, Map1(identity0, identity1), identity1};
+        triple_reduction<T> final_tr{identity0, identity1, identity2};
         for (int j = 0; j < NUM_WARPS; j++) {
             final_tr.red0 = Op0(final_tr.red0, sdata[j].red0);
             final_tr.red1 = Op1(final_tr.red1, sdata[j].red1);
@@ -108,7 +108,7 @@ __global__ void triple_reduction_kernel_packed(const triple_reduction<T>* a,
 template<typename T, T (*Map0)(T), T (*Map1)(T, T), T (*Map2)(T), 
 T (*Op0)(T, T), T (*Op1)(T, T), T (*Op2)(T, T)>
 void triple_reduction_launcher(const T* data0, const T* data1, T* out0, T* out1, T* out2, int n,
-                              T identity0, T identity1) {
+                              T identity0, T identity1, T identity2) {
     int current_n = n;
     int num_units = (current_n + STRIDE - 1) / STRIDE;
     int num_blocks = (num_units + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -123,21 +123,21 @@ void triple_reduction_launcher(const T* data0, const T* data1, T* out0, T* out1,
     }
 
     triple_reduction_kernel<T, Map0, Map1, Map2, Op0, Op1, Op2><<<num_blocks, BLOCK_SIZE>>>(
-        data0, data1, device_output, current_n, identity0, identity1);
+        data0, data1, device_output, current_n, identity0, identity1, identity2);
     current_n = num_blocks;
 
     while (current_n > BLOCK_SIZE) {
         num_units = (current_n + STRIDE - 1) / STRIDE;
         num_blocks = (num_units + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-        triple_reduction_kernel_packed<T, Map1, Op0, Op1, Op2><<<num_blocks, BLOCK_SIZE>>>(
-            device_output, device_output, current_n, identity0, identity1);
+        triple_reduction_kernel_packed<T, Op0, Op1, Op2><<<num_blocks, BLOCK_SIZE>>>(
+            device_output, device_output, current_n, identity0, identity1, identity2);
 
         current_n = num_blocks;
     }
 
-    triple_reduction_kernel_packed<T, Map1, Op0, Op1, Op2><<<1, BLOCK_SIZE>>>(
-        device_output, device_output, current_n, identity0, identity1);
+    triple_reduction_kernel_packed<T, Op0, Op1, Op2><<<1, BLOCK_SIZE>>>(
+        device_output, device_output, current_n, identity0, identity1, identity2);
 
     cudaMemcpy(out0, &device_output[0].red0, sizeof(T), cudaMemcpyDeviceToDevice);
     cudaMemcpy(out1, &device_output[0].red1, sizeof(T), cudaMemcpyDeviceToDevice);

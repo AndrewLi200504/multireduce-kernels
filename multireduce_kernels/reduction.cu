@@ -38,17 +38,17 @@ void union_intersection_launcher(bool* data0, bool* data1, int* reduce_or, int* 
 
 void a_ab_b_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, int n) {
     triple_reduction_launcher<float, dev_nop<float>, dev_mult<float>, dev_nop<float>,
-    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asum, absum, bsum, n, 0.0f, 0.0f);
+    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asum, absum, bsum, n, 0.0f, 0.0f, 0.0f);
 }
 
 void asq_ab_bsq_launcher(float* data0, float* data1, float* asumsq, float* absum, float* bsumsq, int n) {
     triple_reduction_launcher<float, dev_sqr<float>, dev_mult<float>, dev_sqr<float>, 
-    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asumsq, absum, bsumsq, n, 0.0f, 0.0f);
+    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asumsq, absum, bsumsq, n, 0.0f, 0.0f, 0.0f);
 }
 
 void a_sqrtab_b_launcher(float* data0, float* data1, float* asum, float* sqrtabsum, float* bsum, int n) {
     triple_reduction_launcher<float, dev_nop<float>, dev_mult_sqrt<float>, dev_nop<float>, 
-    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asum, sqrtabsum, bsum, n, 0.0f, 0.0f);
+    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asum, sqrtabsum, bsum, n, 0.0f, 0.0f, 0.0f);
 }
 
 void a_ab_b_asq_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, float* asumsq, int n) {

@@ -1,7 +1,3 @@
-#include <cfloat>
-#include <stdio.h>
-#define BLOCK_SIZE 128
-#define WARP_SIZE 32
 #define STRIDE 8
 
 template<typename T>
@@ -15,7 +11,6 @@ template<typename T> __device__ __forceinline__ T dev_sqr(T a) { return a * a; }
 template<typename T> __device__ __forceinline__ T dev_min(T a, T b) { return a < b ? a : b; }
 template<typename T> __device__ __forceinline__ T dev_max(T a, T b) { return a > b ? a : b; }
 template<typename T> __device__ __forceinline__ T dev_sum(T a, T b) { return a + b; }
-
 
 template<typename T, T (*Op0)(T, T), T (*Op1)(T, T)>
 __device__ __forceinline__ dual_reduction<T> warp_reduce_dual(dual_reduction<T> dr) {

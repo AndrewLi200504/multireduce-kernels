@@ -5,8 +5,9 @@
 #include "single_reduction.h"
 #include "double_reduction.h"
 #include "triple_reduction.h"
-
-
+#include "quad_reduction.h"
+#include "double_reduction_dual_input.h"
+#include "triple_reduction_dual_trimap.h"
 void min_max_launcher(float* data, float* min, float* max, int n) {
     dual_reduction_launcher<float, dev_nop<float>, dev_nop<float>, dev_min<float>, dev_max<float>>(
         data, min, max, n, FLT_MAX, -FLT_MAX);
@@ -30,7 +31,35 @@ void max_argmax_launcher(float* data, float* max, uint64_t* ind, int n) {
         data, max, ind, n, -FLT_MAX, UINT64_MAX);
 }
 
+void union_intersection_launcher(bool* data0, bool* data1, int* reduce_or, int* reduce_and, int n) {
+    dual_reduction_launcher<bool, int, dev_bitwise_or<bool>, dev_bitwise_and<bool>, dev_sum<int>,
+    dev_sum<int>>(data0, data1, reduce_or, reduce_and, n, false, false);
+}
+
+void a_ab_b_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, int n) {
+    triple_reduction_launcher<float, dev_nop<float>, dev_mult<float>, dev_nop<float>,
+    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asum, absum, bsum, n, 0.0f, 0.0f, 0.0f);
+}
+
 void asq_ab_bsq_launcher(float* data0, float* data1, float* asumsq, float* absum, float* bsumsq, int n) {
     triple_reduction_launcher<float, dev_sqr<float>, dev_mult<float>, dev_sqr<float>, 
-    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asumsq, absum, bsumsq, n, 0.0f, 0.0f);
+    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asumsq, absum, bsumsq, n, 0.0f, 0.0f, 0.0f);
 }
+
+void a_sqrtab_b_launcher(float* data0, float* data1, float* asum, float* sqrtabsum, float* bsum, int n) {
+    triple_reduction_launcher<float, dev_nop<float>, dev_mult_sqrt<float>, dev_nop<float>, 
+    dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asum, sqrtabsum, bsum, n, 0.0f, 0.0f, 0.0f);
+}
+
+
+void tp_fp_fn_launcher(bool* data0, bool* data1, int* reduce_tp, int* reduce_fp, int* reduce_fn, int n) {
+    triple_reduction_launcher<bool, int, dev_bitwise_and<bool>, dev_fp<bool>, dev_fn<bool>,
+    dev_sum<int>, dev_sum<int>, dev_sum<int>>(data0, data1, reduce_tp, reduce_fp, reduce_fn, n, false, false, false);
+}
+
+void a_ab_b_asq_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, float* asumsq, int n) {
+    quad_reduction_launcher<float, dev_nop<float>, dev_mult<float>, dev_nop<float>, dev_sqr<float>, 
+    dev_sum<float>, dev_sum<float>, dev_sum<float>, dev_sum<float>> 
+    (data0, data1, asum, absum, bsum, asumsq, n, 0.0f, 0.0f, 0.0f);
+}
+

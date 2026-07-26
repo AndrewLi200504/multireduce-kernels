@@ -145,8 +145,13 @@ void single_reduction_launcher(const T* data, T* out0, U* out1, int n,
     int current_n = n;
     int num_blocks = (current_n + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
-    sri<T, U>* device_output;
-    cudaMalloc(&device_output, num_blocks * sizeof(sri<T, U>));
+    static thread_local sri<T, U>* device_output = nullptr;
+    static thread_local size_t device_output_capacity = 0;
+    if (num_blocks > device_output_capacity) {
+        if (device_output) cudaFree(device_output);
+        cudaMalloc(&device_output, num_blocks * sizeof(sri<T, U>));
+        device_output_capacity = num_blocks;
+    }                            
     single_reduction_kernel<T, U, Map, Cmp, Cmpind><<<num_blocks, BLOCK_SIZE>>>(
         data, device_output, current_n, identity, ind_identity);
 
@@ -160,13 +165,8 @@ void single_reduction_launcher(const T* data, T* out0, U* out1, int n,
         current_n = num_blocks;
     }
 
-    sri<T, U>* final_output;
-    cudaMalloc(&final_output, sizeof(sri<T, U>));
     single_reduction_kernel_packed<T, U, Cmp, Cmpind><<<1, BLOCK_SIZE>>>(
-        device_output, final_output, current_n, identity, ind_identity);
-    cudaFree(device_output);
-
-    cudaMemcpy(out0, &final_output->red, sizeof(T), cudaMemcpyDeviceToDevice);
-    cudaMemcpy(out1, &final_output->ind, sizeof(U), cudaMemcpyDeviceToDevice);
-    cudaFree(final_output);
+        device_output, device_output, current_n, identity, ind_identity);
+    cudaMemcpy(out0, &device_output[0].red, sizeof(T), cudaMemcpyDeviceToDevice);
+    cudaMemcpy(out1, &device_output[0].ind, sizeof(U), cudaMemcpyDeviceToDevice);
 }

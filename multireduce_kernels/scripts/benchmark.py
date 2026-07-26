@@ -111,8 +111,13 @@ class Benchmark:
                 self.torch_reds.append(TorchReduction.from_dict(torch_red_dict))
         else:
             self.mk_red = getattr(mkw, str)
-            self.tens_init_fn = self.init_float if str != "iou" else self.init_bool
+            if hasattr(self.mk_red, "init_type_name"):
+                self.tens_init_fn = getattr(self, f"init_{self.mk_red.init_type_name}")
+            else: 
+                self.tens_init_fn = self.init_float
+            # self.tens_init_fn = self.init_float if self.mk_red.init_type_name is None else getattr(f"init_{self.mk_red.init_type_name}")
             self.num_tens_args = len(inspect.signature(self.mk_red).parameters)
+            # breakpoint()
             self.torch_reds.append(TorchReduction.from_string(str))
         
         self.acc_count = [0] * len(self.torch_reds) 

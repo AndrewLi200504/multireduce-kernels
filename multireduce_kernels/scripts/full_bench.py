@@ -11,17 +11,26 @@ def benchmark_one_fn(name, f):
         print("______________________________________")
         return failures
     else:
-        return []
+        return None
 
 
 if __name__ == "__main__": 
     failures = []
     benchmarks = 0
     for name, f in mk.__dict__.items(): 
-        failures += benchmark_one_fn(name, f)
+        failure = benchmark_one_fn(name, f)
+        #failures += benchmark_one_fn(name, f)
+        if failure is None:
+            continue
+        failures += failure
         benchmarks += 1
     for name, f in mkw.__dict__.items():
-        failures += benchmark_one_fn(name, f)
+        if not hasattr(f, "init_type_name"):
+            continue
+        failure = benchmark_one_fn(name, f)
+        if failure is None:
+            continue
+        failures += failure
         benchmarks += 1
     print("\033[32m" + f"Passed: {benchmarks - len(failures)} / {benchmarks}" + "\033[0m")
     for red_name, red_accuracy in failures:

@@ -1,8 +1,4 @@
-#include <cfloat>
-#include <stdio.h>
-#define BLOCK_SIZE 128
-#define WARP_SIZE 32
-#define STRIDE 8
+
 
 template<typename T> 
 struct triple_reduction {

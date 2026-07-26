@@ -1,8 +1,3 @@
-#include <cfloat>
-#include <stdio.h>
-#define BLOCK_SIZE 128
-#define WARP_SIZE 32
-#define STRIDE 8
 
 
 template<typename T> __device__ __forceinline__ T dev_bitwise_and(T a, T b) { return a & b; }
@@ -29,8 +24,8 @@ __global__ void dual_reduction_kernel(const T* a, const T* b, dual_reduction<U>*
             dr.red0 = Op0(dr.red0, Map0(a[currIdx], b[currIdx])); 
             dr.red1 = Op1(dr.red1, Map1(a[currIdx], b[currIdx]));
         } else {
-            dr.red0 = Op0(dr.red0, Map0(identity0, identity0));
-            dr.red1 = Op1(dr.red1, Map1(identity1, identity1));
+            dr.red0 = Op0(dr.red0, identity0);
+            dr.red1 = Op1(dr.red1, identity1);
         }
     }
 

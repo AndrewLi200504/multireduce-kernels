@@ -1,7 +1,6 @@
 #include <torch/extension.h>
-#include "reduction_binding.h"
 #include <cstdint>
-
+#include "reduction_binding.h"
 
 
 std::tuple<torch::Tensor, torch::Tensor> min_max_binding(torch::Tensor input) {
@@ -136,6 +135,27 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> a_sqrtab_b_binding(torch
     return {asum, sqrtabsum, bsum};
 }
 
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> tp_fp_fn_binding(torch::Tensor input0, torch::Tensor input1) {
+    TORCH_CHECK(input0.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input1.is_cuda(), "must be cuda tensor");
+
+    TORCH_CHECK(input0.numel() == input1.numel(), "tensors must be the same length");
+    auto reduce_tp = torch::empty({1}, input0.options().dtype(torch::kInt));
+    auto reduce_fp = torch::empty({1}, input0.options().dtype(torch::kInt));
+    auto reduce_fn = torch::empty({1}, input0.options().dtype(torch::kInt));
+
+    tp_fp_fn_launcher(
+        input0.data_ptr<bool>(),
+        input1.data_ptr<bool>(),
+        reduce_tp.data_ptr<int>(),
+        reduce_fp.data_ptr<int>(),
+        reduce_fn.data_ptr<int>(),
+        input0.numel()
+    );
+    return {reduce_tp, reduce_fp, reduce_fn};
+}
+
+
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> a_ab_b_asq_binding(torch::Tensor input0, torch::Tensor input1) {
     TORCH_CHECK(input0.is_cuda(), "must be cuda tensor");
     TORCH_CHECK(input1.is_cuda(), "must be cuda tensor");
@@ -170,6 +190,7 @@ PYBIND11_MODULE(multireduce_kernels, m) {
     m.def("a_ab_b", &a_ab_b_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}]})");
     m.def("asq_ab_bsq", &asq_ab_bsq_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"asq": 0}, {"ab": -1}, {"bsq": 1}]})");
     m.def("a_sqrtab_b", &a_sqrtab_b_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"sqrtab": -1}, {"b": 1}]})");
+    m.def("tp_fp_fn", &tp_fp_fn_binding, R"({"type":"bool", "args": 2, "return_tuple_size": 3, "reds": [{"tp": -1}, {"fp": -1}, {"fn": -1}]})");
     m.def("a_ab_b_asq", &a_ab_b_asq_binding, R"({"type":"float", "args": 2, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}, {"asq": 0}]})");
 
 }

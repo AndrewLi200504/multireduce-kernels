@@ -17,3 +17,8 @@ def covariance(t0, t1):
 def olsslope(t0, t1):
     a, ab, b, asq = mk.a_ab_b_asq(t0, t1)
     return (t0.numel() * ab - a * b) / (t0.numel() * asq - a ** 2)
+
+def iou(t0, t1):
+    
+    union, intersection = mk.union_intersection(t0, t1)
+    return (intersection + 1e-6) / (union + 1e-6)

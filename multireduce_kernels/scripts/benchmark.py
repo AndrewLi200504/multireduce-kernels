@@ -111,7 +111,7 @@ class Benchmark:
                 self.torch_reds.append(TorchReduction.from_dict(torch_red_dict))
         else:
             self.mk_red = getattr(mkw, str)
-            self.tens_init_fn = self.init_float
+            self.tens_init_fn = self.init_float if str != "iou" else self.init_bool
             self.num_tens_args = len(inspect.signature(self.mk_red).parameters)
             self.torch_reds.append(TorchReduction.from_string(str))
         

@@ -29,6 +29,12 @@ def union(t0, t1):
     return (t0 | t1).sum()
 def intersection(t0, t1):
     return (t0 & t1).sum()
+def fp(t0, t1):
+    return (~t0 & t1).sum()
+def fn(t0, t1):
+    return (t0 & ~t1).sum()
+def iou(t0, t1):
+    return (intersection(t0, t1) + 1e-6) / (union(t0, t1) + 1e-6)
 SPECIAL_REDS = {
     "sumsq": sumsq,
     "asq": sumsq,
@@ -43,5 +49,9 @@ SPECIAL_REDS = {
     "a": sum,
     "b": sum,
     "union": union,
-    "intersection": intersection
+    "intersection": intersection,
+    "tp": intersection,
+    "fp": fp,
+    "fn": fn,
+    "iou": iou
 }

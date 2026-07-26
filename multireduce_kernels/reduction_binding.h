@@ -9,4 +9,5 @@ void union_intersection_launcher(bool* data0, bool* data1, int* reduce_or, int* 
 void a_ab_b_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, int n);
 void asq_ab_bsq_launcher(float* data0, float* data1, float* asumsq, float* absum, float* bsumsq, int n);
 void a_sqrtab_b_launcher(float* data0, float* data1, float* asum, float* sqrtabsum, float* bsum, int n);
+void tp_fp_fn_launcher(bool* data0, bool* data1, int* reduce_tp, int* reduce_fp, int* reduce_fn, int n);
 void a_ab_b_asq_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, float* asumsq, int n);

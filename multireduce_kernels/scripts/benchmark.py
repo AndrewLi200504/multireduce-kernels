@@ -114,8 +114,7 @@ class Benchmark:
             if hasattr(self.mk_red, "init_type_name"):
                 self.tens_init_fn = getattr(self, f"init_{self.mk_red.init_type_name}")
             else: 
-                self.tens_init_fn = self.init_float
-            # self.tens_init_fn = self.init_float if self.mk_red.init_type_name is None else getattr(f"init_{self.mk_red.init_type_name}")
+                print("Invalid benchmark")
             self.num_tens_args = len(inspect.signature(self.mk_red).parameters)
             # breakpoint()
             self.torch_reds.append(TorchReduction.from_string(str))
@@ -140,7 +139,7 @@ class Benchmark:
             red_name = self.torch_reds[i].get_name()
             print(f"{red_name} accuracy: {red_accuracy:.2f}%")
             if red_accuracy < 50:
-                failures.append((red_name, red_accuracy))
+                failures.append((self.mk_red.__name__, red_name, red_accuracy))
         return failures
         
         

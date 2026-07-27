@@ -43,24 +43,11 @@ def fn(t0, t1):
 def iou(t0, t1):
     return (intersection(t0, t1) + 1e-6) / (union(t0, t1) + 1e-6)
 SPECIAL_REDS = {
-    "sumsq": sumsq,
     "asq": sumsq,
     "ab": summul,
     "bsq": sumsq,
     "sqrtab": summulsqrt,
-    "samplevar": samplevar,
-    "cosinesim": cosinesim,
-    "l2norm": l2norm,
-    "covariance": covariance,
-    "olsslope": olsslope,
     "a": sum,
     "b": sum,
-    "union": union,
-    "intersection": intersection,
     "tp": intersection,
-    "fp": fp,
-    "fn": fn,
-    "iou": iou,
-    "precision": precision,
-    "recall": recall
 }

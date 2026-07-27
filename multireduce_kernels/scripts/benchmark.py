@@ -3,7 +3,7 @@ import torch
 import multireduce_kernels as mk
 import inspect
 import json
-from torch_helpers import SPECIAL_REDS
+import torch_helpers as th
 import mk_workloads as mkw
 
 from typing import Any, Callable
@@ -52,7 +52,12 @@ class TorchReduction():
     def from_dict(cls, _dict):
         fn_key = next(iter(_dict))
         self = cls()
-        self.reduction = SPECIAL_REDS[fn_key] if fn_key in SPECIAL_REDS else getattr(torch, fn_key)
+        if hasattr(th, fn_key):
+            self.reduction = getattr(th, fn_key)
+        elif fn_key in th.SPECIAL_REDS:
+            self.reduction = th.SPECIAL_REDS[fn_key] 
+        else:
+            self.reduction = getattr(torch, fn_key)
         self.tuple_idx = _dict[fn_key]
         self.name = self.reduction.__name__
         return self
@@ -60,7 +65,7 @@ class TorchReduction():
     @classmethod
     def from_string(cls, string):
         self = cls()
-        self.reduction = SPECIAL_REDS[string]
+        self.reduction = th.SPECIAL_REDS[string] if string in th.SPECIAL_REDS else getattr(th, string)
         self.tuple_idx = -1
         self.name = string 
         return self

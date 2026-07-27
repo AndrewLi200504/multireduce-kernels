@@ -32,3 +32,13 @@ def iou(t0, t1):
     
     union, intersection = mk.union_intersection(t0, t1)
     return (intersection + 1e-6) / (union + 1e-6)
+
+@add_init_type("bool")
+def precision(t0, t1):
+    tp, fp, _ = mk.tp_fp_fn(t0, t1)
+    return tp / (tp + fp)
+
+@add_init_type("bool")
+def recall(t0, t1):
+    tp, _, fn = mk.tp_fp_fn(t0, t1)
+    return tp / (tp + fn)

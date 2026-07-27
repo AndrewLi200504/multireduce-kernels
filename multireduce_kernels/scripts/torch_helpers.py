@@ -22,9 +22,16 @@ def covariance(t0, t1):
 def olsslope(t0, t1):
     t0_c = t0 - t0.mean()
     t1_c = t1 - t1.mean()
-
     return torch.dot(t0_c, t1_c) / torch.dot(t0_c, t0_c)
 
+def precision(t0, t1):
+    tp = intersection(t0, t1)
+    _fp = fp(t0, t1)
+    return tp / (tp + _fp)
+def recall(t0, t1):
+    tp = intersection(t0, t1)
+    _fn = fn(t0, t1)
+    return tp / (tp + _fn)
 def union(t0, t1):
     return (t0 | t1).sum()
 def intersection(t0, t1):
@@ -53,5 +60,7 @@ SPECIAL_REDS = {
     "tp": intersection,
     "fp": fp,
     "fn": fn,
-    "iou": iou
+    "iou": iou,
+    "precision": precision,
+    "recall": recall
 }

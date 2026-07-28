@@ -20,14 +20,12 @@ void sum_sumsq_launcher(float* data, float* sum, float* sumsq, int n) {
 }
 
 void min_argmin_launcher(float* data, float* min, uint64_t* ind, int n) {
-    single_reduction_launcher<float, uint64_t, dev_nop<float>, dev_comp_min<float>,
-    dev_comp_min<uint64_t>>(
+    single_reduction_launcher<float, uint64_t, dev_nop<float>, dev_min<float>>(
         data, min, ind, n, FLT_MAX, UINT64_MAX);
 }
 
 void max_argmax_launcher(float* data, float* max, uint64_t* ind, int n) {
-    single_reduction_launcher<float, uint64_t, dev_nop<float>, dev_comp_max<float>,
-    dev_comp_min<uint64_t>>(
+    single_reduction_launcher<float, uint64_t, dev_nop<float>, dev_max<float>>(
         data, max, ind, n, -FLT_MAX, UINT64_MAX);
 }
 

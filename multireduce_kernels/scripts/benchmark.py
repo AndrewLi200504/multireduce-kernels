@@ -121,7 +121,6 @@ class Benchmark:
             else: 
                 print("Invalid benchmark")
             self.num_tens_args = len(inspect.signature(self.mk_red).parameters)
-            # breakpoint()
             self.torch_reds.append(TorchReduction.from_string(str))
         
         self.acc_count = [0] * len(self.torch_reds) 

@@ -50,4 +50,6 @@ SPECIAL_REDS = {
     "a": sum,
     "b": sum,
     "tp": intersection,
+    "acnt": sum,
+    "bcnt": sum
 }

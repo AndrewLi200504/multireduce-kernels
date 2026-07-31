@@ -93,7 +93,7 @@ __global__ void dual_reduction_kernel_packed(const dual_reduction<T>* a,
         }
         blockdrs[blockIdx.x] = final_dr;
     }
-}
+}       
 
 template<typename T, T (*Map0)(T), T (*Map1)(T), T (*Op0)(T, T), T (*Op1)(T, T)>
 void dual_reduction_launcher(const T* data, T* out0, T* out1, int n,

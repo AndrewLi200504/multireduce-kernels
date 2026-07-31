@@ -2,12 +2,13 @@
 #include <cfloat>
 #include <cstdint>
 
-#include "single_reduction.h"
-#include "double_reduction.h"
-#include "triple_reduction.h"
-#include "quad_reduction.h"
-#include "double_reduction_dual_input.h"
-#include "triple_reduction_dual_trimap.h"
+#include "single/single_reduction.h"
+#include "double/double_reduction.h"
+#include "triple/triple_reduction.h"
+#include "quad/quad_reduction.h"
+#include "double/double_reduction_dual_input.h"
+#include "triple/triple_reduction_dual_trimap.h"
+#include "triple/triple_reduction_mixed_type.h"
 void min_max_launcher(float* data, float* min, float* max, int n) {
     dual_reduction_launcher<float, dev_nop<float>, dev_nop<float>, dev_min<float>, dev_max<float>>(
         data, min, max, n, FLT_MAX, -FLT_MAX);
@@ -34,6 +35,10 @@ void union_intersection_launcher(bool* data0, bool* data1, int* reduce_or, int* 
     dev_sum<int>>(data0, data1, reduce_or, reduce_and, n, false, false);
 }
 
+void acnt_inter_bcnt_launcher(bool* data0, bool* data1, int* acnt, int* reduce_and, int* bcnt, int n) {
+    triple_reduction_launcher<bool, int, dev_nop<int>, dev_bitwise_and<int>, dev_nop<int>, dev_sum<int>, 
+    dev_sum<int>, dev_sum<int>>(data0, data1, acnt, reduce_and, bcnt, n, 0, 0, 0);
+}
 void a_ab_b_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, int n) {
     triple_reduction_launcher<float, dev_nop<float>, dev_mult<float>, dev_nop<float>,
     dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asum, absum, bsum, n, 0.0f, 0.0f, 0.0f);

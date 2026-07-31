@@ -1,5 +1,5 @@
 import torch
-
+from constants import EPS 
 def sum(t):
     return t.sum()
 def sumsq(t):
@@ -41,7 +41,10 @@ def fp(t0, t1):
 def fn(t0, t1):
     return (t0 & ~t1).sum()
 def iou(t0, t1):
-    return (intersection(t0, t1) + 1e-6) / (union(t0, t1) + 1e-6)
+    return intersection(t0, t1) / (union(t0, t1) + EPS)
+def dice(t0, t1): 
+    tp = intersection(t0, t1)
+    return (2 * tp) / (2 * tp + fp(t0, t1) + fn(t0, t1) + EPS)
 SPECIAL_REDS = {
     "asq": sumsq,
     "ab": summul,

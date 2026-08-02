@@ -109,6 +109,49 @@ __global__ void quad_reduction_kernel_packed(const quad_reduction<T>* a,
     }
 }
 
+template<typename T, T(*Op0)(T, T), T(*Op1)(T, T), T (*Op2)(T, T), T (*Op3)(T, T)>
+__global__ void quad_reduction_kernel_packed(const quad_reduction<T>* a,
+                                               quad_reduction<T>* blockqrs,
+                                               int n, T identity0, T identity1, T identity2, T identity3) {
+    int tid = threadIdx.x;
+    int i = blockIdx.x * blockDim.x + tid;
+    int lane = tid % WARP_SIZE;
+    int warp_id = tid / WARP_SIZE;
+    const int NUM_WARPS = BLOCK_SIZE / WARP_SIZE;
+
+    __shared__ quad_reduction<T> sdata[NUM_WARPS];
+
+    quad_reduction<T> qr{identity0, identity1, identity2, identity3};
+    for (int k = 0; k < STRIDE; k++) {
+        int currIdx = STRIDE * i + k;
+        if (currIdx < n) {
+            qr.red0 = Op0(qr.red0, a[currIdx].red0);
+            qr.red1 = Op1(qr.red1, a[currIdx].red1);
+            qr.red2 = Op2(qr.red2, a[currIdx].red2);
+            qr.red3 = Op3(qr.red3, a[currIdx].red3);
+
+        } else {
+            qr.red0 = Op0(qr.red0, identity0);
+            qr.red1 = Op1(qr.red1, identity1);
+            qr.red2 = Op2(qr.red2, identity2);
+            qr.red3 = Op3(qr.red3, identity3);
+        }
+    }
+    quad_reduction<T> warp_qr = warp_reduce_quad<T, Op0, Op1, Op2, Op3>(qr);
+    if (lane == 0) sdata[warp_id] = warp_qr;
+    __syncthreads();
+
+    if (tid == 0) {
+        quad_reduction<T> final_qr{identity0, identity1, identity2, identity3};
+        for (int j = 0; j < NUM_WARPS; j++) {
+            final_qr.red0 = Op0(final_qr.red0, sdata[j].red0);
+            final_qr.red1 = Op1(final_qr.red1, sdata[j].red1);
+            final_qr.red2 = Op2(final_qr.red2, sdata[j].red2);
+            final_qr.red3 = Op3(final_qr.red3, sdata[j].red3);
+        }
+        blockqrs[blockIdx.x] = final_qr;
+    }
+}
 template<typename T, T (*Map0)(T), T (*Map1)(T, T), T (*Map2)(T), T (*Map3)(T),
 T (*Op0)(T, T), T (*Op1)(T, T), T (*Op2)(T, T), T (*Op3)(T, T)>
 void quad_reduction_launcher(const T* data0, const T* data1, T* out0, T* out1, T* out2, T* out3, int n,

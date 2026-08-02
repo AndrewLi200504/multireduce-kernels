@@ -155,6 +155,7 @@ class Benchmark:
         torch_rets = []
         mk_tuple = None
         for i, torch_red in enumerate(self.torch_reds):
+            
             ret = torch_red(*tens_tuple)
             torch_rets.append(ret)
             self.torch_total_time += torch_red.get_timestep()

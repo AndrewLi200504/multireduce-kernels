@@ -1,5 +1,5 @@
 import torch
-
+from constants import EPS 
 def sum(t):
     return t.sum()
 def sumsq(t):
@@ -22,9 +22,16 @@ def covariance(t0, t1):
 def olsslope(t0, t1):
     t0_c = t0 - t0.mean()
     t1_c = t1 - t1.mean()
-
     return torch.dot(t0_c, t1_c) / torch.dot(t0_c, t0_c)
 
+def precision(t0, t1):
+    tp = intersection(t0, t1)
+    _fp = fp(t0, t1)
+    return tp / (tp + _fp)
+def recall(t0, t1):
+    tp = intersection(t0, t1)
+    _fn = fn(t0, t1)
+    return tp / (tp + _fn)
 def union(t0, t1):
     return (t0 | t1).sum()
 def intersection(t0, t1):
@@ -33,25 +40,26 @@ def fp(t0, t1):
     return (~t0 & t1).sum()
 def fn(t0, t1):
     return (t0 & ~t1).sum()
+def tn(t0, t1):
+    return (~t0 & ~t1).sum()
 def iou(t0, t1):
-    return (intersection(t0, t1) + 1e-6) / (union(t0, t1) + 1e-6)
+    return intersection(t0, t1) / (union(t0, t1) + EPS)
+def dice(t0, t1): 
+    tp = intersection(t0, t1)
+    return (2 * tp) / (2 * tp + fp(t0, t1) + fn(t0, t1) + EPS)
+def accuracy(t0, t1):
+    tp = intersection(t0, t1)
+    _tn = tn(t0, t1)
+    return (tp + _tn) / (tp + fp(t0, t1) + fn(t0, t1) + _tn + EPS)
+
 SPECIAL_REDS = {
-    "sumsq": sumsq,
     "asq": sumsq,
     "ab": summul,
     "bsq": sumsq,
     "sqrtab": summulsqrt,
-    "samplevar": samplevar,
-    "cosinesim": cosinesim,
-    "l2norm": l2norm,
-    "covariance": covariance,
-    "olsslope": olsslope,
     "a": sum,
     "b": sum,
-    "union": union,
-    "intersection": intersection,
     "tp": intersection,
-    "fp": fp,
-    "fn": fn,
-    "iou": iou
+    "acnt": sum,
+    "bcnt": sum
 }

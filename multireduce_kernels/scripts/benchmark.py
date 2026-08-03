@@ -3,7 +3,7 @@ import torch
 import multireduce_kernels as mk
 import inspect
 import json
-from torch_helpers import SPECIAL_REDS
+import torch_helpers as th
 import mk_workloads as mkw
 
 from typing import Any, Callable
@@ -52,7 +52,12 @@ class TorchReduction():
     def from_dict(cls, _dict):
         fn_key = next(iter(_dict))
         self = cls()
-        self.reduction = SPECIAL_REDS[fn_key] if fn_key in SPECIAL_REDS else getattr(torch, fn_key)
+        if hasattr(th, fn_key):
+            self.reduction = getattr(th, fn_key)
+        elif fn_key in th.SPECIAL_REDS:
+            self.reduction = th.SPECIAL_REDS[fn_key] 
+        else:
+            self.reduction = getattr(torch, fn_key)
         self.tuple_idx = _dict[fn_key]
         self.name = self.reduction.__name__
         return self
@@ -60,7 +65,7 @@ class TorchReduction():
     @classmethod
     def from_string(cls, string):
         self = cls()
-        self.reduction = SPECIAL_REDS[string]
+        self.reduction = th.SPECIAL_REDS[string] if string in th.SPECIAL_REDS else getattr(th, string)
         self.tuple_idx = -1
         self.name = string 
         return self
@@ -114,10 +119,8 @@ class Benchmark:
             if hasattr(self.mk_red, "init_type_name"):
                 self.tens_init_fn = getattr(self, f"init_{self.mk_red.init_type_name}")
             else: 
-                self.tens_init_fn = self.init_float
-            # self.tens_init_fn = self.init_float if self.mk_red.init_type_name is None else getattr(f"init_{self.mk_red.init_type_name}")
+                print("Invalid benchmark")
             self.num_tens_args = len(inspect.signature(self.mk_red).parameters)
-            # breakpoint()
             self.torch_reds.append(TorchReduction.from_string(str))
         
         self.acc_count = [0] * len(self.torch_reds) 
@@ -140,7 +143,7 @@ class Benchmark:
             red_name = self.torch_reds[i].get_name()
             print(f"{red_name} accuracy: {red_accuracy:.2f}%")
             if red_accuracy < 50:
-                failures.append((red_name, red_accuracy))
+                failures.append((self.mk_red.__name__, red_name, red_accuracy))
         return failures
         
         
@@ -152,6 +155,7 @@ class Benchmark:
         torch_rets = []
         mk_tuple = None
         for i, torch_red in enumerate(self.torch_reds):
+            
             ret = torch_red(*tens_tuple)
             torch_rets.append(ret)
             self.torch_total_time += torch_red.get_timestep()

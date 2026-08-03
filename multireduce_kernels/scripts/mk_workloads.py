@@ -1,4 +1,5 @@
 import multireduce_kernels as mk
+from constants import EPS
 def add_init_type(init_type_name: str):
     def wrapper(func):
         func.init_type_name = init_type_name
@@ -29,6 +30,23 @@ def olsslope(t0, t1):
 
 @add_init_type("bool")
 def iou(t0, t1):
-    
-    union, intersection = mk.union_intersection(t0, t1)
-    return (intersection + 1e-6) / (union + 1e-6)
+    tp, fp, fn = mk.tp_fp_fn(t0, t1)
+    return tp / (tp + fp + fn + EPS)
+@add_init_type("bool") 
+def dice(t0, t1):
+    tp, fp, fn = mk.tp_fp_fn(t0, t1)
+    return 2 * tp / (2 * tp + fp + fn + EPS)
+@add_init_type("bool")
+def accuracy(t0, t1):
+    tp, fp, fn, tn = mk.tp_fp_fn_tn(t0, t1)
+    return (tp + fp) / (tp + fp + fn + tn + EPS)
+@add_init_type("bool")
+def precision(t0, t1):
+    tp, fp, _ = mk.tp_fp_fn(t0, t1)
+    return tp / (tp + fp + EPS)
+
+@add_init_type("bool")
+def recall(t0, t1):
+    tp, _, fn = mk.tp_fp_fn(t0, t1)
+    return tp / (tp + fn + EPS)
+

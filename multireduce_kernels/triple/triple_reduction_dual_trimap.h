@@ -1,4 +1,4 @@
-
+template<typename T> __device__ __forceinline__ T dev_bitwise_and(T a, T b) { return a & b; }
 template<typename T> __device__ __forceinline__ T dev_fp(T a, T b) { return !a & b; }
 template<typename T> __device__ __forceinline__ T dev_fn(T a, T b) { return a & !b; }
 
@@ -46,7 +46,7 @@ __global__ void triple_reduction_kernel(const T* a, const T* b, triple_reduction
 }
 
 
-template<typename T, typename U, T (*Map0)(T, T), T (*Map1)(T, T), T (*Map2)(T, T),  U (*Op0)(U, U), U (*Op1)(U, U), U (*Op2)(U, U)>
+template<typename T, typename U, T (*Map0)(T, T), T (*Map1)(T, T), T (*Map2)(T, T), U (*Op0)(U, U), U (*Op1)(U, U), U (*Op2)(U, U)>
 void triple_reduction_launcher(const T* data0, const T* data1, U* out0, U* out1, U* out2, int n,
                               T identity0, T identity1, T identity2) {
     int current_n = n;

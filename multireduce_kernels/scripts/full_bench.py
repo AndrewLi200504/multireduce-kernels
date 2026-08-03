@@ -19,7 +19,6 @@ if __name__ == "__main__":
     benchmarks = 0
     for name, f in mk.__dict__.items(): 
         failure = benchmark_one_fn(name, f)
-        #failures += benchmark_one_fn(name, f)
         if failure is None:
             continue
         failures += failure
@@ -33,5 +32,5 @@ if __name__ == "__main__":
         failures += failure
         benchmarks += 1
     print("\033[32m" + f"Passed: {benchmarks - len(failures)} / {benchmarks}" + "\033[0m")
-    for red_name, red_accuracy in failures:
-        print("\033[31m" + f"Fail: {red_name} due to accuracy {red_accuracy}%" + "\033[0m")
+    for fn_name, red_name, red_accuracy in failures:
+        print("\033[31m" + f"Fail: {fn_name} {red_name} due to accuracy {red_accuracy}%" + "\033[0m")

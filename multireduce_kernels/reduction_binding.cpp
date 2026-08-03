@@ -64,6 +64,22 @@ std::tuple<torch::Tensor, torch::Tensor> max_argmax_binding(torch::Tensor input)
     return {max, argmax};
 }
 
+std::tuple<torch::Tensor, torch::Tensor> a_ab_binding(torch::Tensor input0, torch::Tensor input1) {
+    TORCH_CHECK(input0.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input1.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input0.numel() == input1.numel(), "tensors must be the same length");
+
+    auto asum = torch::empty({1}, input0.options());
+    auto absum = torch::empty({1}, input0.options());
+    a_ab_launcher(
+        input0.data_ptr<float>(),
+        input1.data_ptr<float>(),
+        asum.data_ptr<float>(),
+        absum.data_ptr<float>(),
+        input0.numel()
+    );
+    return {asum, absum};
+}
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> a_ab_b_binding(torch::Tensor input0, torch::Tensor input1) {
     TORCH_CHECK(input0.is_cuda(), "must be cuda tensor");
@@ -192,6 +208,7 @@ PYBIND11_MODULE(multireduce_kernels, m) {
     m.def("sum_sumsq", &sum_sumsq_binding, R"({"type":"float", "args": 1, "return_tuple_size": 2, "reds": [{"sum": -1}, {"sumsq": -1}]})");
     m.def("min_argmin", &min_argmin_binding, R"({"type":"float", "args": 1, "return_tuple_size": 2, "reds": [{"min": -1}, {"argmin": -1}]})");
     m.def("max_argmax", &max_argmax_binding, R"({"type":"float", "args": 1,"return_tuple_size": 2, "reds": [{"max": -1}, {"argmax": -1}]})");
+    m.def("a_ab", &a_ab_binding, R"({"type":"float", "args": 2, "return_tuple_size": 2, "reds": [{"a": 0}, {"ab": -1}]})");
     m.def("a_ab_b", &a_ab_b_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}]})");
     m.def("asq_ab_bsq", &asq_ab_bsq_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"asq": 0}, {"ab": -1}, {"bsq": 1}]})");
     m.def("a_sqrtab_b", &a_sqrtab_b_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"sqrtab": -1}, {"b": 1}]})");

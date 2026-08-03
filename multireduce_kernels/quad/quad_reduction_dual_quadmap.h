@@ -1,7 +1,3 @@
-template<typename T> __device__ __forceinline__ T dev_tn(T a, T b) { return !a & !b; }
-
-
-
 
 template<typename T, typename U, T (*Map0)(T, T), T (*Map1)(T, T), T (*Map2)(T, T), T (*Map3)(T, T),
 U (*Op0)(U, U), U (*Op1)(U, U), U (*Op2)(U, U), U (*Op3)(U, U)>

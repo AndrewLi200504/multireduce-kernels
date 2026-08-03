@@ -1,18 +1,8 @@
 #include <cfloat>
 #include <stdio.h>
-#define BLOCK_SIZE 128
-#define WARP_SIZE 32
-#define STRIDE 8
 
 
-template<typename T, typename U>
-struct single_reduction_ind {
-    T red;
-    U ind; 
-};
 
-template<typename T, typename U>
-using sri = single_reduction_ind<T, U>;
 
 template<typename T, typename U, T (*Cmp)(T, T)>
 __device__ __forceinline__ sri<T, U> warp_reduce_single_ind(sri<T, U> sr) {

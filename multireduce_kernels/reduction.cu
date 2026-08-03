@@ -2,10 +2,13 @@
 #include <cfloat>
 #include <cstdint>
 
+#include "global/helpers.h"
+#include "global/types.h"
 #include "single/single_reduction.h"
 #include "double/double_reduction.h"
 #include "triple/triple_reduction.h"
 #include "quad/quad_reduction.h"
+#include "double/double_reduction_dual_mixmap_1.h"
 #include "triple/triple_reduction_dual_trimap.h"
 #include "quad/quad_reduction_dual_quadmap.h"
 void min_max_launcher(float* data, float* min, float* max, int n) {
@@ -27,6 +30,11 @@ void min_argmin_launcher(float* data, float* min, uint64_t* ind, int n) {
 void max_argmax_launcher(float* data, float* max, uint64_t* ind, int n) {
     single_reduction_launcher<float, uint64_t, dev_nop<float>, dev_max<float>>(
         data, max, ind, n, -FLT_MAX, UINT64_MAX);
+}
+
+void a_ab_launcher(float* data0, float* data1, float* asum, float* absum, int n) {
+    dual_reduction_launcher<float, dev_nop<float>, dev_mult<float>, dev_sum<float>, 
+    dev_sum<float>>(data0, data1, asum, absum, n, 0.0f, 0.0f);
 }
 
 void a_ab_b_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, int n) {

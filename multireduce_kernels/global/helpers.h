@@ -1,0 +1,11 @@
+template<typename T> __device__ __forceinline__ T dev_nop(T a) { return a; }
+template<typename T> __device__ __forceinline__ T dev_sqr(T a) { return a * a; }
+template<typename T> __device__ __forceinline__ T dev_min(T a, T b) { return a < b ? a : b; }
+template<typename T> __device__ __forceinline__ T dev_max(T a, T b) { return a > b ? a : b; }
+template<typename T> __device__ __forceinline__ T dev_sum(T a, T b) { return a + b; }
+template<typename T> __device__ __forceinline__ T dev_mult(T a, T b) { return a * b; }
+template<typename T> __device__ __forceinline__ T dev_mult_sqrt(T a, T b) { return sqrt(a) * sqrt(b); }
+template<typename T> __device__ __forceinline__ T dev_bitwise_and(T a, T b) { return a & b; }
+template<typename T> __device__ __forceinline__ T dev_fp(T a, T b) { return !a & b; }
+template<typename T> __device__ __forceinline__ T dev_fn(T a, T b) { return a & !b; }
+template<typename T> __device__ __forceinline__ T dev_tn(T a, T b) { return !a & !b; }

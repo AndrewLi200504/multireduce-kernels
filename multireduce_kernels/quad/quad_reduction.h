@@ -1,13 +1,5 @@
 
 
-template<typename T> 
-struct quad_reduction {
-    T red0;
-    T red1;
-    T red2;
-    T red3;
-};
-
 
 template<typename T, T (*Op0)(T, T), T (*Op1)(T, T), T (*Op2)(T, T), T (*Op3)(T, T)>
 __device__ __forceinline__ quad_reduction<T> warp_reduce_quad(quad_reduction<T>qr) {
@@ -32,7 +24,7 @@ __global__ void quad_reduction_kernel(const T* a, const T* b, quad_reduction<T>*
 
     __shared__ quad_reduction<T> sdata[NUM_WARPS];
 
-    quad_reduction<T> qr{identity0, Map1(identity0, identity1), identity1, identity2};
+    quad_reduction<T> qr{identity0, identity0, identity1, identity2};
     for (int k = 0; k < STRIDE; k++) {
         int currIdx = STRIDE * i + k;
         if (currIdx < n) {
@@ -41,10 +33,10 @@ __global__ void quad_reduction_kernel(const T* a, const T* b, quad_reduction<T>*
             qr.red2 = Op2(qr.red2, Map2(b[currIdx]));
             qr.red3 = Op3(qr.red3, Map3(a[currIdx]));
         } else {
-            qr.red0 = Op0(qr.red0, Map0(identity0));
-            qr.red1 = Op1(qr.red1, Map1(identity0, identity1));
-            qr.red2 = Op2(qr.red2, Map2(identity1));
-            qr.red3 = Op3(qr.red3, Map3(identity2));
+            qr.red0 = Op0(qr.red0, identity0);
+            qr.red1 = Op1(qr.red1, identity0);
+            qr.red2 = Op2(qr.red2, identity1);
+            qr.red3 = Op3(qr.red3, identity2);
         }
     }
 
@@ -77,7 +69,7 @@ __global__ void quad_reduction_kernel_packed(const quad_reduction<T>* a,
 
     __shared__ quad_reduction<T> sdata[NUM_WARPS];
 
-    quad_reduction<T> qr{identity0, Map1(identity0, identity1), identity1, identity2};
+    quad_reduction<T> qr{identity0, identity0, identity1, identity2};
     for (int k = 0; k < STRIDE; k++) {
         int currIdx = STRIDE * i + k;
         if (currIdx < n) {
@@ -88,7 +80,7 @@ __global__ void quad_reduction_kernel_packed(const quad_reduction<T>* a,
 
         } else {
             qr.red0 = Op0(qr.red0, identity0);
-            qr.red1 = Op1(qr.red1, Map1(identity0, identity1));
+            qr.red1 = Op1(qr.red1, identity0);
             qr.red2 = Op2(qr.red2, identity1);
             qr.red3 = Op3(qr.red3, identity2);
         }
@@ -98,7 +90,7 @@ __global__ void quad_reduction_kernel_packed(const quad_reduction<T>* a,
     __syncthreads();
 
     if (tid == 0) {
-        quad_reduction<T> final_qr{identity0, Map1(identity0, identity1), identity1, identity2};
+        quad_reduction<T> final_qr{identity0, identity0, identity1, identity2};
         for (int j = 0; j < NUM_WARPS; j++) {
             final_qr.red0 = Op0(final_qr.red0, sdata[j].red0);
             final_qr.red1 = Op1(final_qr.red1, sdata[j].red1);

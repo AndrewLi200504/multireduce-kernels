@@ -1,7 +1,3 @@
-template<typename T> __device__ __forceinline__ T dev_bitwise_and(T a, T b) { return a & b; }
-template<typename T> __device__ __forceinline__ T dev_fp(T a, T b) { return !a & b; }
-template<typename T> __device__ __forceinline__ T dev_fn(T a, T b) { return a & !b; }
-
 
 
 

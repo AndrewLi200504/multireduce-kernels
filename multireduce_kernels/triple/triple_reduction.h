@@ -1,15 +1,4 @@
 
-
-template<typename T> 
-struct triple_reduction {
-    T red0;
-    T red1;
-    T red2;
-};
-
-template<typename T> __device__ __forceinline__ T dev_mult(T a, T b) { return a * b; }
-template<typename T> __device__ __forceinline__ T dev_mult_sqrt(T a, T b) { return sqrt(a) * sqrt(b); }
-
 template<typename T, T (*Op0)(T, T), T (*Op1)(T, T), T (*Op2)(T, T)>
 __device__ __forceinline__ triple_reduction<T> warp_reduce_triple(triple_reduction<T> tr) {
     for (int offset = WARP_SIZE / 2; offset > 0; offset /= 2) {
@@ -40,9 +29,9 @@ __global__ void triple_reduction_kernel(const T* a, const T* b, triple_reduction
             tr.red1 = Op1(tr.red1, Map1(a[currIdx], b[currIdx])); 
             tr.red2 = Op2(tr.red2, Map2(b[currIdx]));
         } else {
-            tr.red0 = Op0(tr.red0, Map0(identity0));
+            tr.red0 = Op0(tr.red0, identity0);
             tr.red1 = Op1(tr.red1, identity1);
-            tr.red2 = Op2(tr.red2, Map2(identity2));
+            tr.red2 = Op2(tr.red2, identity2);
         }
     }
 

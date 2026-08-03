@@ -81,6 +81,24 @@ std::tuple<torch::Tensor, torch::Tensor> a_ab_binding(torch::Tensor input0, torc
     return {asum, absum};
 }
 
+
+std::tuple<torch::Tensor, torch::Tensor> aloga_alogb_binding(torch::Tensor input0, torch::Tensor input1) {
+    TORCH_CHECK(input0.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input1.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input0.numel() == input1.numel(), "tensors must be the same length");
+
+    auto aloga_sum = torch::empty({1}, input0.options());
+    auto alogb_sum = torch::empty({1}, input0.options());
+    aloga_alogb_launcher(
+        input0.data_ptr<float>(),
+        input1.data_ptr<float>(),
+        aloga_sum.data_ptr<float>(),
+        alogb_sum.data_ptr<float>(),
+        input0.numel()
+    );
+    return {aloga_sum, alogb_sum};
+}
+
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> a_ab_b_binding(torch::Tensor input0, torch::Tensor input1) {
     TORCH_CHECK(input0.is_cuda(), "must be cuda tensor");
     TORCH_CHECK(input1.is_cuda(), "must be cuda tensor");
@@ -209,6 +227,7 @@ PYBIND11_MODULE(multireduce_kernels, m) {
     m.def("min_argmin", &min_argmin_binding, R"({"type":"float", "args": 1, "return_tuple_size": 2, "reds": [{"min": -1}, {"argmin": -1}]})");
     m.def("max_argmax", &max_argmax_binding, R"({"type":"float", "args": 1,"return_tuple_size": 2, "reds": [{"max": -1}, {"argmax": -1}]})");
     m.def("a_ab", &a_ab_binding, R"({"type":"float", "args": 2, "return_tuple_size": 2, "reds": [{"a": 0}, {"ab": -1}]})");
+    m.def("aloga_alogb", &aloga_alogb_binding, R"({"type": "prob", "args": 2, "return_tuple_size": 2, "reds": [{"aloga": 0}, {"alogb": -1}]})");
     m.def("a_ab_b", &a_ab_b_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}]})");
     m.def("asq_ab_bsq", &asq_ab_bsq_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"asq": 0}, {"ab": -1}, {"bsq": 1}]})");
     m.def("a_sqrtab_b", &a_sqrtab_b_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"sqrtab": -1}, {"b": 1}]})");

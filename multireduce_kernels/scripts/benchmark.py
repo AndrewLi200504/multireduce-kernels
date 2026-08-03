@@ -88,7 +88,9 @@ class Benchmark:
         return torch.randn(self.tens_len, device="cuda")
     def init_bool(self):
         return torch.randint(0, 2, (1, self.tens_len), dtype=bool, device="cuda")
-  
+    def init_prob(self):
+        prob_dist = torch.rand(self.tens_len, device="cuda")
+        return prob_dist / prob_dist.sum()
     @classmethod
     def default(cls):
         return cls(torch_total_time=0, 

@@ -50,3 +50,7 @@ def recall(t0, t1):
     tp, _, fn = mk.tp_fp_fn(t0, t1)
     return tp / (tp + fn + EPS)
 
+@add_init_type("prob")
+def kl_divergence(t0, t1):
+    plogp_sum, plogq_sum = mk.aloga_alogb(t0, t1)
+    return plogp_sum - plogq_sum

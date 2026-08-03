@@ -1,13 +1,18 @@
 import torch
+import torch.nn.functional as f
 from constants import EPS 
 def sum(t):
     return t.sum()
 def sumsq(t):
     return (t ** 2).sum()
+def aloga(t):
+    return (t * t.log()).sum()
 def summul(t0, t1):
     return (t0 * t1).sum()
 def summulsqrt(t0, t1):
     return (t0.sqrt() * t1.sqrt()).sum()
+def alogb(t0, t1):
+    return (t0 * t1.log()).sum()
 def samplevar(t): 
     return t.var()
 def cosinesim(t0, t1): 
@@ -32,6 +37,8 @@ def recall(t0, t1):
     tp = intersection(t0, t1)
     _fn = fn(t0, t1)
     return tp / (tp + _fn)
+def kl_divergence(t0, t1):
+    return f.kl_div(t1.log(), t0, reduction="sum")
 def union(t0, t1):
     return (t0 | t1).sum()
 def intersection(t0, t1):
@@ -61,5 +68,5 @@ SPECIAL_REDS = {
     "b": sum,
     "tp": intersection,
     "acnt": sum,
-    "bcnt": sum
+    "bcnt": sum,
 }

@@ -37,6 +37,11 @@ void a_ab_launcher(float* data0, float* data1, float* asum, float* absum, int n)
     dev_sum<float>>(data0, data1, asum, absum, n, 0.0f, 0.0f);
 }
 
+void aloga_alogb_launcher(float* data0, float* data1, float* aloga_sum, float* alogb_sum, int n) {
+    dual_reduction_launcher<float, dev_log_weighted<float>, dev_log_prod<float>, dev_sum<float>,
+    dev_sum<float>>(data0, data1, aloga_sum, alogb_sum, n, 0.0f, 0.0f);
+}
+
 void a_ab_b_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, int n) {
     triple_reduction_launcher<float, dev_nop<float>, dev_mult<float>, dev_nop<float>,
     dev_sum<float>, dev_sum<float>, dev_sum<float>> (data0, data1, asum, absum, bsum, n, 0.0f, 0.0f, 0.0f);

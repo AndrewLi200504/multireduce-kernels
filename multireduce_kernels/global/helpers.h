@@ -1,3 +1,4 @@
+#include <cmath>
 template<typename T> __device__ __forceinline__ T dev_nop(T a) { return a; }
 template<typename T> __device__ __forceinline__ T dev_sqr(T a) { return a * a; }
 template<typename T> __device__ __forceinline__ T dev_min(T a, T b) { return a < b ? a : b; }
@@ -9,3 +10,5 @@ template<typename T> __device__ __forceinline__ T dev_bitwise_and(T a, T b) { re
 template<typename T> __device__ __forceinline__ T dev_fp(T a, T b) { return !a & b; }
 template<typename T> __device__ __forceinline__ T dev_fn(T a, T b) { return a & !b; }
 template<typename T> __device__ __forceinline__ T dev_tn(T a, T b) { return !a & !b; }
+template<typename T> __device__ __forceinline__ T dev_log_weighted(T a) { return a * logf(a); }
+template<typename T> __device__ __forceinline__ T dev_log_prod(T a, T b) { return a * logf(b); }

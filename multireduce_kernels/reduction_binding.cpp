@@ -218,6 +218,36 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> tp_fp_fn_
     return {reduce_tp, reduce_fp, reduce_fn, reduce_tn};
 }
 
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> a_ab_ac_ad_binding(torch::Tensor input0, torch::Tensor input1,
+torch::Tensor input2, torch::Tensor input3) {
+    TORCH_CHECK(input0.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input1.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input2.is_cuda(), "must be cuda tensor");
+    TORCH_CHECK(input3.is_cuda(), "must be cuda tensor");
+
+    TORCH_CHECK(input0.numel() == input1.numel(), "tensors must be the same length");
+    TORCH_CHECK(input1.numel() == input2.numel(), "tensors must be the same length");
+    TORCH_CHECK(input2.numel() == input3.numel(), "tensors must be the same length");
+
+    auto asum = torch::empty({1}, input0.options());
+    auto absum = torch::empty({1}, input0.options());
+    auto acsum = torch::empty({1}, input0.options());
+    auto adsum = torch::empty({1}, input0.options());
+
+    a_ab_ac_ad_launcher(
+        input0.data_ptr<float>(),
+        input1.data_ptr<float>(),
+        input2.data_ptr<float>(),
+        input3.data_ptr<float>(),
+        asum.data_ptr<float>(),
+        absum.data_ptr<float>(),
+        acsum.data_ptr<float>(),
+        adsum.data_ptr<float>(),
+        input0.numel()
+    );
+    return {asum, absum, acsum, adsum};
+}
+
 PYBIND11_MODULE(multireduce_kernels, m) {
     py::options options;
     options.disable_function_signatures();
@@ -234,8 +264,8 @@ PYBIND11_MODULE(multireduce_kernels, m) {
     m.def("tp_fp_fn", &tp_fp_fn_binding, R"({"type":"bool", "args": 2, "return_tuple_size": 3, "reds": [{"tp": -1}, {"fp": -1}, {"fn": -1}]})");
     m.def("a_ab_b_asq", &a_ab_b_asq_binding, R"({"type":"float", "args": 2, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}, {"asq": 0}]})");
     m.def("tp_fp_fn_tn", &tp_fp_fn_tn_binding, R"({"type": "bool", "args": 2, "return_tuple_size": 4, "reds": [{"tp": -1}, {"fp": -1}, {"fn": -1}, {"tn": -1}]})");
-
-}
+    m.def("a_ab_ac_ad", &a_ab_ac_ad_binding, R"({"type":"float", "args": 4, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": [0, 1]}, {"ac": [0, 2]}, {"ad": [0, 3]}]})");
+}   
 
 
 

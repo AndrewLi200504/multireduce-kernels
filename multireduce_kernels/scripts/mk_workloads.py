@@ -36,10 +36,7 @@ def iou(t0, t1):
 def dice(t0, t1):
     tp, fp, fn = mk.tp_fp_fn(t0, t1)
     return 2 * tp / (2 * tp + fp + fn + EPS)
-@add_init_type("bool")
-def accuracy(t0, t1):
-    tp, fp, fn, tn = mk.tp_fp_fn_tn(t0, t1)
-    return (tp + fp) / (tp + fp + fn + tn + EPS)
+
 @add_init_type("bool")
 def precision(t0, t1):
     tp, fp, _ = mk.tp_fp_fn(t0, t1)

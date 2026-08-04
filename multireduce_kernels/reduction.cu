@@ -11,6 +11,7 @@
 #include "double/double_reduction_dual_mixmap_1.h"
 #include "triple/triple_reduction_dual_trimap.h"
 #include "quad/quad_reduction_dual_quadmap.h"
+#include "quad/quad_reduction_quad_mixmap.h"
 void min_max_launcher(float* data, float* min, float* max, int n) {
     dual_reduction_launcher<float, dev_nop<float>, dev_nop<float>, dev_min<float>, dev_max<float>>(
         data, min, max, n, FLT_MAX, -FLT_MAX);
@@ -73,6 +74,14 @@ void tp_fp_fn_tn_launcher(bool* data0, bool* data1, int* reduce_tp, int* reduce_
     quad_reduction_launcher<bool, int, dev_bitwise_and<bool>, dev_fp<bool>, dev_fn<bool>, dev_tn<bool>,
     dev_sum<int>, dev_sum<int>, dev_sum<int>, dev_sum<int>>(
         data0, data1, reduce_tp, reduce_fp, reduce_fn, reduce_tn, n, false, false, false, false
+    );
+}
+
+void a_ab_ac_ad_launcher(float* data0, float* data1, float* data2, float* data3, float* asum, float* absum, 
+float* acsum, float* adsum, int n) {
+    quad_reduction_launcher<float, dev_nop<float>, dev_mult<float>, dev_mult<float>, dev_mult<float>, 
+    dev_sum<float>, dev_sum<float>, dev_sum<float>, dev_sum<float>>(
+        data0, data1, data2, data3, asum, absum, acsum, adsum, n, 0.0f, 0.0f, 0.0f, 0.0f
     );
 }
 

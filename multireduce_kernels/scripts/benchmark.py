@@ -1,5 +1,6 @@
 from argparse import ArgumentParser
 import torch
+import torch.distributions as dist
 import multireduce_kernels as mk
 import inspect
 import json
@@ -13,8 +14,17 @@ from time import perf_counter
 
 def cast_if_long(mk_ret):
     return mk_ret.to(torch.long) if mk_ret.dtype is torch.uint64 else mk_ret
-def compute_accuracy(torch_ret, mk_ret):
-    return 1 if abs(mk_ret - torch_ret) < 1e-2 else 0
+def compute_accuracy(torch_ret, mk_ret, rtol=1e-5, atol=1e-5):
+    if torch_ret.dtype != mk_ret.dtype:
+        mk_ret = mk_ret.to(torch_ret.dtype)
+    return int(
+        torch.allclose(
+            torch_ret,
+            mk_ret,
+            rtol=rtol,
+            atol=atol
+        )
+    )
 
 @contextmanager
 def timeit_and_synch(cls):
@@ -28,14 +38,16 @@ def timeit_and_synch(cls):
 
 
 class TorchReduction(): 
-    tuple_idx: int
+    tuple_idx: int | list
     reduction: Callable[..., Any]
     timestep: float
     name: str
     def args_filterer(func):
       
         def wrapper(self, *args):
-            if self.tuple_idx != -1:
+            if isinstance(self.tuple_idx, list):
+                args = tuple(args[i] for i in self.tuple_idx)
+            elif self.tuple_idx != -1:
                 i = self.tuple_idx
                 args = args[i: i + 1]
             result = func(self, *args)
@@ -91,6 +103,7 @@ class Benchmark:
     def init_prob(self):
         prob_dist = torch.rand(self.tens_len, device="cuda")
         return prob_dist / prob_dist.sum()
+        
     @classmethod
     def default(cls):
         return cls(torch_total_time=0, 

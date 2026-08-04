@@ -37,6 +37,7 @@ def recall(t0, t1):
     tp = intersection(t0, t1)
     _fn = fn(t0, t1)
     return tp / (tp + _fn)
+
 def kl_divergence(t0, t1):
     return f.kl_div(t1.log(), t0, reduction="sum")
 def union(t0, t1):
@@ -54,14 +55,13 @@ def iou(t0, t1):
 def dice(t0, t1): 
     tp = intersection(t0, t1)
     return (2 * tp) / (2 * tp + fp(t0, t1) + fn(t0, t1) + EPS)
-def accuracy(t0, t1):
-    tp = intersection(t0, t1)
-    _tn = tn(t0, t1)
-    return (tp + _tn) / (tp + fp(t0, t1) + fn(t0, t1) + _tn + EPS)
+
 
 SPECIAL_REDS = {
     "asq": sumsq,
     "ab": summul,
+    "ac": summul,
+    "ad": summul,
     "bsq": sumsq,
     "sqrtab": summulsqrt,
     "a": sum,

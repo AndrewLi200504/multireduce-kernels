@@ -13,3 +13,5 @@ void a_sqrtab_b_launcher(float* data0, float* data1, float* asum, float* sqrtabs
 void tp_fp_fn_launcher(bool* data0, bool* data1, int* reduce_tp, int* reduce_fp, int* reduce_fn, int n);
 void a_ab_b_asq_launcher(float* data0, float* data1, float* asum, float* absum, float* bsum, float* asumsq, int n);
 void tp_fp_fn_tn_launcher(bool* data0, bool* data1, int* reduce_tp, int* reduce_fp, int* reduce_fn, int* reduce_tn, int n);
+void a_ab_ac_ad_launcher(float* data0, float* data1, float* data2, float* data3, float* asum, float* absum, 
+float* acsum, float* adsum, int n);

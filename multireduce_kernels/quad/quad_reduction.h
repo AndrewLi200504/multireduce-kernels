@@ -13,6 +13,8 @@ __device__ __forceinline__ quad_reduction<T> warp_reduce_quad(quad_reduction<T>q
 }
 
 
+
+
 template<typename T, T (*Map0)(T), T (*Map1)(T, T), T (*Map2)(T), T (*Map3)(T), T (*Op0)(T, T), T (*Op1)(T, T), T (*Op2)(T, T), T (*Op3) (T, T)>
 __global__ void quad_reduction_kernel(const T* a, const T* b, quad_reduction<T>* blockqrs,
                                         int n, T identity0, T identity1, T identity2) {
@@ -101,7 +103,7 @@ __global__ void quad_reduction_kernel_packed(const quad_reduction<T>* a,
     }
 }
 
-template<typename T, T(*Op0)(T, T), T(*Op1)(T, T), T (*Op2)(T, T), T (*Op3)(T, T)>
+template<typename T, T (*Op0)(T, T), T (*Op1)(T, T), T (*Op2)(T, T), T (*Op3)(T, T)>
 __global__ void quad_reduction_kernel_packed(const quad_reduction<T>* a,
                                                quad_reduction<T>* blockqrs,
                                                int n, T identity0, T identity1, T identity2, T identity3) {
@@ -144,6 +146,7 @@ __global__ void quad_reduction_kernel_packed(const quad_reduction<T>* a,
         blockqrs[blockIdx.x] = final_qr;
     }
 }
+
 template<typename T, T (*Map0)(T), T (*Map1)(T, T), T (*Map2)(T), T (*Map3)(T),
 T (*Op0)(T, T), T (*Op1)(T, T), T (*Op2)(T, T), T (*Op3)(T, T)>
 void quad_reduction_launcher(const T* data0, const T* data1, T* out0, T* out1, T* out2, T* out3, int n,

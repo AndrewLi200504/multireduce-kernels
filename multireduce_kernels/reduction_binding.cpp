@@ -248,6 +248,25 @@ torch::Tensor input2, torch::Tensor input3) {
     return {asum, absum, acsum, adsum};
 }
 
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> nan_inf_zero_psive_binding(torch::Tensor input) {
+    TORCH_CHECK(input.is_cuda(), "must be cuda tensor");
+
+    auto nancnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto infcnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto zerocnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto psivecnt = torch::empty({1}, input.options().dtype(torch::kInt));
+
+    nan_inf_zero_psive_launcher(
+        input.data_ptr<float>(),
+        nancnt.data_ptr<int>(),
+        infcnt.data_ptr<int>(),
+        zerocnt.data_ptr<int>(),
+        psivecnt.data_ptr<int>(),
+        input.numel()
+    );
+    return {nancnt, infcnt, zerocnt, psivecnt};
+}
+
 PYBIND11_MODULE(multireduce_kernels, m) {
     py::options options;
     options.disable_function_signatures();
@@ -265,6 +284,8 @@ PYBIND11_MODULE(multireduce_kernels, m) {
     m.def("a_ab_b_asq", &a_ab_b_asq_binding, R"({"type":"float", "args": 2, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}, {"asq": 0}]})");
     m.def("tp_fp_fn_tn", &tp_fp_fn_tn_binding, R"({"type": "bool", "args": 2, "return_tuple_size": 4, "reds": [{"tp": -1}, {"fp": -1}, {"fn": -1}, {"tn": -1}]})");
     m.def("a_ab_ac_ad", &a_ab_ac_ad_binding, R"({"type":"float", "args": 4, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": [0, 1]}, {"ac": [0, 2]}, {"ad": [0, 3]}]})");
+    m.def("nan_inf_zero_psive", &nan_inf_zero_psive_binding, R"({"type": "float_debug", "args": 1, "return_tuple_size": 4, "reds": [{"nan": -1}, {"inf": -1}, {"zero": -1}, {"psive": -1}]})");
+
 }   
 
 

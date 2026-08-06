@@ -12,3 +12,8 @@ template<typename T> __device__ __forceinline__ T dev_fn(T a, T b) { return a & 
 template<typename T> __device__ __forceinline__ T dev_tn(T a, T b) { return !a & !b; }
 template<typename T> __device__ __forceinline__ T dev_log_weighted(T a) { return a * logf(a); }
 template<typename T> __device__ __forceinline__ T dev_log_prod(T a, T b) { return a * logf(b); }
+template<typename T, typename U> __device__ __forceinline__ U dev_isnan(T a) { return isnan(a); }
+template<typename T, typename U> __device__ __forceinline__ U dev_isinf(T a) { return isinf(a); }
+template<typename T, typename U> __device__ __forceinline__ U dev_iszero(T a) { return a == 0; }
+template<typename T, typename U> __device__ __forceinline__ U dev_ispositive(T a) { return a > 0; }
+

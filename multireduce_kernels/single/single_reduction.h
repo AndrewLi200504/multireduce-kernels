@@ -1,8 +1,3 @@
-#include <cfloat>
-#include <stdio.h>
-
-
-
 
 template<typename T, typename U, T (*Cmp)(T, T)>
 __device__ __forceinline__ sri<T, U> warp_reduce_single_ind(sri<T, U> sr) {

@@ -12,6 +12,7 @@
 #include "triple/triple_reduction_dual_trimap.h"
 #include "quad/quad_reduction_dual_quadmap.h"
 #include "quad/quad_reduction_quad_mixmap.h"
+#include "quad/quad_reduction_single_input.h"
 void min_max_launcher(float* data, float* min, float* max, int n) {
     dual_reduction_launcher<float, dev_nop<float>, dev_nop<float>, dev_min<float>, dev_max<float>>(
         data, min, max, n, FLT_MAX, -FLT_MAX);
@@ -82,6 +83,13 @@ float* acsum, float* adsum, int n) {
     quad_reduction_launcher<float, dev_nop<float>, dev_mult<float>, dev_mult<float>, dev_mult<float>, 
     dev_sum<float>, dev_sum<float>, dev_sum<float>, dev_sum<float>>(
         data0, data1, data2, data3, asum, absum, acsum, adsum, n, 0.0f, 0.0f, 0.0f, 0.0f
+    );
+}
+
+void nan_inf_zero_psive_launcher(float* data, int* nancnt, int* infcnt, int* zerocnt, int* psivecnt, int n) {
+    quad_reduction_launcher<float, int, dev_isnan<float, int>, dev_isinf<float, int>, dev_iszero<float, int>, dev_ispositive<float, int>,
+    dev_sum<int>, dev_sum<int>, dev_sum<int>, dev_sum<int>>(
+        data, nancnt, infcnt, zerocnt, psivecnt, n, 0, 0, 0, 0
     );
 }
 

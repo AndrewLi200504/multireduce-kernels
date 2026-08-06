@@ -15,3 +15,4 @@ void a_ab_b_asq_launcher(float* data0, float* data1, float* asum, float* absum, 
 void tp_fp_fn_tn_launcher(bool* data0, bool* data1, int* reduce_tp, int* reduce_fp, int* reduce_fn, int* reduce_tn, int n);
 void a_ab_ac_ad_launcher(float* data0, float* data1, float* data2, float* data3, float* asum, float* absum, 
 float* acsum, float* adsum, int n);
+void nan_inf_zero_psive_launcher(float* data, int* nancnt, int* infcnt, int* zerocnt, int* psivecnt, int n);

@@ -103,7 +103,13 @@ class Benchmark:
     def init_prob(self):
         prob_dist = torch.rand(self.tens_len, device="cuda")
         return prob_dist / prob_dist.sum()
-        
+    def init_float_debug(self):
+        original = torch.randn(self.tens_len, device="cuda")
+        r = torch.rand(self.tens_len)
+        original[r < 0.1] = float('nan')
+        original[(r >= 0.1) & (r < 0.2)] = float('inf')
+        original[(r >= 0.2) & (r < 0.3)] = float('-inf')
+        return original
     @classmethod
     def default(cls):
         return cls(torch_total_time=0, 

@@ -7,6 +7,14 @@ def sumsq(t):
     return (t ** 2).sum()
 def aloga(t):
     return (t * t.log()).sum()
+def nan(t):
+    return t.isnan().sum()
+def inf(t):
+    return t.isinf().sum()
+def zero(t):
+    return (t == 0).sum()
+def psive(t):
+    return (t > 0).sum()
 def summul(t0, t1):
     return (t0 * t1).sum()
 def summulsqrt(t0, t1):

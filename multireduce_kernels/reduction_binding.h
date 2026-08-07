@@ -16,3 +16,5 @@ void tp_fp_fn_tn_launcher(bool* data0, bool* data1, int* reduce_tp, int* reduce_
 void a_ab_ac_ad_launcher(float* data0, float* data1, float* data2, float* data3, float* asum, float* absum, 
 float* acsum, float* adsum, int n);
 void nan_inf_zero_psive_launcher(float* data, int* nancnt, int* infcnt, int* zerocnt, int* psivecnt, int n);
+void threshold_launcher(float* data, int threshold0, int threshold1, int threshold2, int threshold3, 
+int* threshold0cnt, int* threshold1cnt, int* threshold2cnt, int* threshold3cnt, int n);

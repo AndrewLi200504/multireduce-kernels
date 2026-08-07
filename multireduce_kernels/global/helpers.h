@@ -16,4 +16,5 @@ template<typename T, typename U> __device__ __forceinline__ U dev_isnan(T a) { r
 template<typename T, typename U> __device__ __forceinline__ U dev_isinf(T a) { return isinf(a); }
 template<typename T, typename U> __device__ __forceinline__ U dev_iszero(T a) { return a == 0; }
 template<typename T, typename U> __device__ __forceinline__ U dev_ispositive(T a) { return a > 0; }
+template<typename T, typename U> __device__ __forceinline__ U dev_threshold(T a, T b) { return a > b; }
 

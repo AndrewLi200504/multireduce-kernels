@@ -93,3 +93,12 @@ void nan_inf_zero_psive_launcher(float* data, int* nancnt, int* infcnt, int* zer
     );
 }
 
+void threshold_launcher(float* data, int threshold0, int threshold1, int threshold2, int threshold3, 
+int* threshold0cnt, int* threshold1cnt, int* threshold2cnt, int* threshold3cnt, int n) {
+    quad_reduction_launcher<float, int, dev_threshold<float, int>, dev_threshold<float, int>, dev_threshold<float, int>,
+    dev_threshold<float, int>, dev_sum<int>, dev_sum<int>, dev_sum<int>, dev_sum<int>>(
+        data, threshold0, threshold1, threshold2, threshold3, threshold0cnt, threshold1cnt, threshold2cnt, threshold3cnt, n,
+        0, 0, 0, 0
+    );    
+}
+

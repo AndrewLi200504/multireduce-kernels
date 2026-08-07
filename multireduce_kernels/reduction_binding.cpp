@@ -267,6 +267,31 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> nan_inf_z
     return {nancnt, infcnt, zerocnt, psivecnt};
 }
 
+
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> threshold_binding(torch::Tensor input, int threshold0, 
+int threshold1, int threshold2, int threshold3) {
+    TORCH_CHECK(input.is_cuda(), "must be cuda tensor");
+
+    auto threshold0cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto threshold1cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto threshold2cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto threshold3cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+
+    threshold_launcher(
+        input.data_ptr<float>(),
+        threshold0, 
+        threshold1, 
+        threshold2, 
+        threshold3,
+        threshold0cnt.data_ptr<int>(),
+        threshold1cnt.data_ptr<int>(),
+        threshold2cnt.data_ptr<int>(),
+        threshold3cnt.data_ptr<int>(),
+        input.numel()
+    );
+    return {threshold0cnt, threshold1cnt, threshold2cnt, threshold3cnt};
+}
+
 PYBIND11_MODULE(multireduce_kernels, m) {
     py::options options;
     options.disable_function_signatures();
@@ -285,7 +310,7 @@ PYBIND11_MODULE(multireduce_kernels, m) {
     m.def("tp_fp_fn_tn", &tp_fp_fn_tn_binding, R"({"type": "bool", "args": 2, "return_tuple_size": 4, "reds": [{"tp": -1}, {"fp": -1}, {"fn": -1}, {"tn": -1}]})");
     m.def("a_ab_ac_ad", &a_ab_ac_ad_binding, R"({"type":"float", "args": 4, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": [0, 1]}, {"ac": [0, 2]}, {"ad": [0, 3]}]})");
     m.def("nan_inf_zero_psive", &nan_inf_zero_psive_binding, R"({"type": "float_debug", "args": 1, "return_tuple_size": 4, "reds": [{"nan": -1}, {"inf": -1}, {"zero": -1}, {"psive": -1}]})");
-
+    m.def("threshold", &threshold_binding, R"({"type": "float", "args": 1, "return_tuple_size": 4, "reds": [{"thresh0": [0, 1]}, {"thresh1": [0, 2]}, {"thresh2": [0, 3]}, {"thresh3": [0, 4]}], "extra_args": [0, 1, 2, 3]})");
 }   
 
 

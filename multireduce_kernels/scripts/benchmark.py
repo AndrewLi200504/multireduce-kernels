@@ -16,7 +16,7 @@ def cast_if_long(mk_ret):
     return mk_ret.to(torch.long) if mk_ret.dtype is torch.uint64 else mk_ret
 def compute_accuracy(torch_ret, mk_ret, rtol=1e-5, atol=1e-5):
     if torch_ret.dtype != mk_ret.dtype:
-        mk_ret = mk_ret.to(torch_ret.dtype)
+        mk_ret: torch.tensor = mk_ret.to(torch_ret.dtype)
     return int(
         torch.allclose(
             torch_ret,
@@ -25,16 +25,6 @@ def compute_accuracy(torch_ret, mk_ret, rtol=1e-5, atol=1e-5):
             atol=atol
         )
     )
-
-@contextmanager
-def timeit_and_synch(cls):
-    torch.cuda.synchronize()
-
-    start = perf_counter()
-    yield
-    torch.cuda.synchronize()
-    end = perf_counter()
-    cls.timestep = end - start
 
 
 class TorchReduction(): 
@@ -60,19 +50,20 @@ class TorchReduction():
         with timeit_and_synch(self):
             return self.reduction(*args) 
         
+        
     @classmethod
     def from_dict(cls, _dict):
         fn_key = next(iter(_dict))
-        self = cls()
+        tr = cls()
         if hasattr(th, fn_key):
-            self.reduction = getattr(th, fn_key)
+            tr.reduction = getattr(th, fn_key)
         elif fn_key in th.SPECIAL_REDS:
-            self.reduction = th.SPECIAL_REDS[fn_key] 
+            tr.reduction = th.SPECIAL_REDS[fn_key] 
         else:
-            self.reduction = getattr(torch, fn_key)
-        self.tuple_idx = _dict[fn_key]
-        self.name = self.reduction.__name__
-        return self
+            tr.reduction = getattr(torch, fn_key)
+        tr.tuple_idx = _dict[fn_key]
+        tr.name = tr.reduction.__name__
+        return tr
 
     @classmethod
     def from_string(cls, string):
@@ -96,6 +87,7 @@ class Benchmark:
     timestep: float
     num_it: int
     tens_init_fn: Callable[..., Any]
+    non_tens_args: tuple | None
     def init_float(self): 
         return torch.randn(self.tens_len, device="cuda")
     def init_bool(self):
@@ -121,20 +113,24 @@ class Benchmark:
                    num_tens_args=0,
                    timestep=0,
                    num_it=0, 
-                   tens_init_fn=cls.init_float)
+                   tens_init_fn=cls.init_float,
+                   non_tens_args=None)
     
     def __init__(self, str: str, tens_len: int, num_it: int):
         self.torch_total_time = 0
         self.mk_total_time = 0
         self.torch_reds = []
-
+        self.non_tens_args = None
         if hasattr(mk, str): 
             self.mk_red = getattr(mk, str)
-            reduction_dict = json.loads(self.mk_red.__doc__)
+            reduction_dict: dict = json.loads(self.mk_red.__doc__)
             self.tens_init_fn = getattr(self, f"init_{reduction_dict['type']}")
             self.num_tens_args = reduction_dict["args"]
             for torch_red_dict in reduction_dict["reds"]:
                 self.torch_reds.append(TorchReduction.from_dict(torch_red_dict))
+            extra_args = reduction_dict.get("extra_args")
+            self.non_tens_args = tuple(extra_args) if extra_args is not None else None
+                        
         else:
             self.mk_red = getattr(mkw, str)
             if hasattr(self.mk_red, "init_type_name"):
@@ -173,15 +169,16 @@ class Benchmark:
             self.tens_init_fn()
             for _ in range(self.num_tens_args)
         )
+        args_tuple = tens_tuple + (self.non_tens_args or ())            
         torch_rets = []
         mk_tuple = None
         for i, torch_red in enumerate(self.torch_reds):
             
-            ret = torch_red(*tens_tuple)
+            ret = torch_red(*args_tuple)
             torch_rets.append(ret)
             self.torch_total_time += torch_red.get_timestep()
         with timeit_and_synch(self): 
-            mk_tuple = self.mk_red(*tens_tuple)
+            mk_tuple = self.mk_red(*args_tuple)
         self.mk_total_time += self.timestep
         for i, (torch_ret, mk_ret) in enumerate(zip(torch_rets, mk_tuple)):
             self.acc_count[i] += compute_accuracy(torch_ret, cast_if_long(mk_ret))
@@ -194,3 +191,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     benchmark = Benchmark(args.kernel, int(args.size), int(args.num_it))
     benchmark()
+
+
+@contextmanager
+def timeit_and_synch(cls: TorchReduction | Benchmark):
+    torch.cuda.synchronize()
+
+    start = perf_counter()
+    yield
+    torch.cuda.synchronize()
+    end = perf_counter()
+    cls.timestep = end - start

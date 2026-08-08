@@ -268,8 +268,48 @@ std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> nan_inf_z
 }
 
 
-std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> threshold_binding(torch::Tensor input, int threshold0, 
-int threshold1, int threshold2, int threshold3) {
+
+std::tuple<torch::Tensor, torch::Tensor> threshold_binding(torch::Tensor input, 
+int threshold0, int threshold1) {
+    TORCH_CHECK(input.is_cuda(), "must be cuda tensor");
+
+    auto threshold0cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto threshold1cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+
+    threshold_launcher(
+        input.data_ptr<float>(),
+        threshold0, 
+        threshold1, 
+        threshold0cnt.data_ptr<int>(),
+        threshold1cnt.data_ptr<int>(),
+        input.numel()
+    );
+    return {threshold0cnt, threshold1cnt};
+}
+
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> threshold_binding(torch::Tensor input, 
+int threshold0, int threshold1, int threshold2) {
+    TORCH_CHECK(input.is_cuda(), "must be cuda tensor");
+
+    auto threshold0cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto threshold1cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto threshold2cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+
+    threshold_launcher(
+        input.data_ptr<float>(),
+        threshold0, 
+        threshold1, 
+        threshold2, 
+        threshold0cnt.data_ptr<int>(),
+        threshold1cnt.data_ptr<int>(),
+        threshold2cnt.data_ptr<int>(),
+        input.numel()
+    );
+    return {threshold0cnt, threshold1cnt, threshold2cnt};
+}
+
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> threshold_binding(torch::Tensor input, 
+int threshold0, int threshold1, int threshold2, int threshold3) {
     TORCH_CHECK(input.is_cuda(), "must be cuda tensor");
 
     auto threshold0cnt = torch::empty({1}, input.options().dtype(torch::kInt));
@@ -295,22 +335,152 @@ int threshold1, int threshold2, int threshold3) {
 PYBIND11_MODULE(multireduce_kernels, m) {
     py::options options;
     options.disable_function_signatures();
+    m.def("min_max", &min_max_binding, R"(
+        Accepts:
+            1. float32 tensor
+        Returns:
+            1. The min 
+            2. The max
+        metadata | {"type":"float", "args": 1, "return_tuple_size": 2, "reds": [{"min": -1}, {"max": -1}]}
+        )");
+    m.def("sum_sumsq", &sum_sumsq_binding, R"(
+        Accepts:
+            1. float32 tensor
+        Returns:
+            1. The sum of all elements
+            2. The sum of squares of all elements
+        metadata | {"type":"float", "args": 1, "return_tuple_size": 2, "reds": [{"sum": -1}, {"sumsq": -1}]}
+        )");
+    m.def("min_argmin", &min_argmin_binding, R"(
+        Accepts: 
+            1. float32 tensor
+        Returns:
+            1. The min
+            2. The index at which the min occurs
+        metadata | {"type":"float", "args": 1, "return_tuple_size": 2, "reds": [{"min": -1}, {"argmin": -1}]})");
+    m.def("max_argmax", &max_argmax_binding, R"(
+        Accepts:
+            1. float32 tensor
+        Returns:
+            1. The max
+            2. The index at which the max occurs
+        metadata | {"type":"float", "args": 1,"return_tuple_size": 2, "reds": [{"max": -1}, {"argmax": -1}]})");
+    m.def("a_ab", &a_ab_binding, R"(
+        Accepts:
+            1. float32 tensor
+            2. float32 tensor
+        Returns:
+            1. The sum of the first tensor's elements 
+            2. The sum of the products between corresponding elements from both tensors
+        metadata | {"type":"float", "args": 2, "return_tuple_size": 2, "reds": [{"a": 0}, {"ab": -1}]})");
+    m.def("aloga_alogb", &aloga_alogb_binding, R"(
+        Accepts:
+            1. float32 tensor
+            2. float32 tensor
+        Returns:
+            1. The sum of each element multiplied by the ln of itself in the first tensor
+            2. The sum of each element in the first tensor multiplied by the ln of the correspending element in the second
+            tensor 
+        metadata | {"type": "prob", "args": 2, "return_tuple_size": 2, "reds": [{"aloga": 0}, {"alogb": -1}]})");
+    m.def("a_ab_b", &a_ab_b_binding, R"(
+        Accepts:
+            1. float32 tensor
+            2. float32 tensor
+        Returns:
+            1. The sum of the first tensor's elements 
+            2. The sum of the products between corresponding elements from both tensors
+            3. The sum of the second tensor's elements
+        metadata | {"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}]})");
+    m.def("asq_ab_bsq", &asq_ab_bsq_binding, R"(
+        Accepts:
+            1. float32 tensor
+            2. float32 tensor
+        Returns:
+            1. The sum of the squares of the first tensor's elements
+            2. The sum of the products between corresponding  elements from both tensors
+            3. The sum of the squares of the second tensor's elements
+        metadata | {"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"asq": 0}, {"ab": -1}, {"bsq": 1}]})");
+    m.def("a_sqrtab_b", &a_sqrtab_b_binding, R"(
+        Accepts: 
+            1. float32 tensor
+            2. float32 tensor
+        Returns:
+            1. The sum of the squares of the first tensor's elements
+            2. The sum of the products between corresponding elements' square roots from both tensors
+            3. The sum of the squares of the second tensor's elements
+        metadata | {"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"sqrtab": -1}, {"b": 1}]})");
+    m.def("tp_fp_fn", &tp_fp_fn_binding, R"(
+        Accepts:
+            1. boolean tensor
+            2. boolean tensor
+        Returns:
+            1. The number of corresponding elements from both tensor's that are both True
+            2. The number of corresponding elements from both tensor's such that the element from the first tensor 
+            is False and the element from the second tensor is True
+            3. The number of corresponding elements from both tensor's such that the element from the first tensor
+            is True and the element from the second tensor is False
+        metadata | {"type":"bool", "args": 2, "return_tuple_size": 3, "reds": [{"tp": -1}, {"fp": -1}, {"fn": -1}]})");
+    m.def("a_ab_b_asq", &a_ab_b_asq_binding, R"(
+        Accepts:
+            1. float32 tensor
+            2. float32 tensor
+        Returns:
+            1. The sum of the first tensor's elements
+            2. The sum of the products between corresponding elements from both tensors
+            3. The sum of the second tensor's elements
+            4. The sum of the squares of the first tensor's elements
+        metadata | {"type":"float", "args": 2, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}, {"asq": 0}]})");
+    m.def("tp_fp_fn_tn", &tp_fp_fn_tn_binding, R"(
+        Accepts:
+            1. boolean tensor
+            2. boolean tensor
+        Returns:
+            1. The number of corresponding elements from both tensor's that are both True
+            2. The number of corresponding elements from both tensor's such that the element from the first tensor 
+            is False and the element from the second tensor is True
+            3. The number of corresponding elements from both tensor's such that the element from the first tensor
+            is True and the element from the second tensor is False
+            4. The number of corresponding elements from both tensor's that are both False
+        metadata | {"type": "bool", "args": 2, "return_tuple_size": 4, "reds": [{"tp": -1}, {"fp": -1}, {"fn": -1}, {"tn": -1}]})");
+    m.def("a_ab_ac_ad", &a_ab_ac_ad_binding, R"(
+        Accepts:
+            1. float32 tensor
+            2. float32 tensor
+            3. float32 tensor
+            4. float32 tensor
+        Returns: 
+            1. The sum of the first tensor's elements 
+            2. The sum of the products between corresponding elements from tensors 1 and 2
+            3. The sum of the products between corresponding elements from tensors 1 and 3
+            4. The sum of the products between corresponding elements from tensors 1 and 4
+        metadata | {"type":"float", "args": 4, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": [0, 1]}, {"ac": [0, 2]}, {"ad": [0, 3]}]})");
+    m.def("nan_inf_zero_psive", &nan_inf_zero_psive_binding, R"(
+        Accepts:
+            1. float32 tensor
+        Returns:
+            1. The number of NaN values in the tensor
+            2. The number of positive/negative infinity values in the tensor
+            3. The number of zeros in the tensor
+            4. The number of positive values in the tensor
+        metadata | {"type": "float_debug", "args": 1, "return_tuple_size": 4, "reds": [{"nan": -1}, {"inf": -1}, {"zero": -1}, {"psive": -1}]})");
+    m.def("threshold", py::overload_cast<torch::Tensor, int, int, int, int>(&threshold_binding), 
+        R"(
+        Accepts: 
+            1. float32 tensor 
+            2. integer threshold
+            3. integer threshold
+            4. integer threshold
+            5. integer threshold
+        Returns: 
+            1. The number of values above threshold 1 in the tensor
+            2. The number of values above threshold 2 in the tensor
+            3. The number of values above threshold 3 in the tensor
+            4. The number of values above threshold 4 in the tensor
 
-    m.def("min_max", &min_max_binding, R"({"type":"float", "args": 1, "return_tuple_size": 2, "reds": [{"min": -1}, {"max": -1}]})");
-    m.def("sum_sumsq", &sum_sumsq_binding, R"({"type":"float", "args": 1, "return_tuple_size": 2, "reds": [{"sum": -1}, {"sumsq": -1}]})");
-    m.def("min_argmin", &min_argmin_binding, R"({"type":"float", "args": 1, "return_tuple_size": 2, "reds": [{"min": -1}, {"argmin": -1}]})");
-    m.def("max_argmax", &max_argmax_binding, R"({"type":"float", "args": 1,"return_tuple_size": 2, "reds": [{"max": -1}, {"argmax": -1}]})");
-    m.def("a_ab", &a_ab_binding, R"({"type":"float", "args": 2, "return_tuple_size": 2, "reds": [{"a": 0}, {"ab": -1}]})");
-    m.def("aloga_alogb", &aloga_alogb_binding, R"({"type": "prob", "args": 2, "return_tuple_size": 2, "reds": [{"aloga": 0}, {"alogb": -1}]})");
-    m.def("a_ab_b", &a_ab_b_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}]})");
-    m.def("asq_ab_bsq", &asq_ab_bsq_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"asq": 0}, {"ab": -1}, {"bsq": 1}]})");
-    m.def("a_sqrtab_b", &a_sqrtab_b_binding, R"({"type":"float", "args": 2, "return_tuple_size": 3, "reds": [{"a": 0}, {"sqrtab": -1}, {"b": 1}]})");
-    m.def("tp_fp_fn", &tp_fp_fn_binding, R"({"type":"bool", "args": 2, "return_tuple_size": 3, "reds": [{"tp": -1}, {"fp": -1}, {"fn": -1}]})");
-    m.def("a_ab_b_asq", &a_ab_b_asq_binding, R"({"type":"float", "args": 2, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": -1}, {"b": 1}, {"asq": 0}]})");
-    m.def("tp_fp_fn_tn", &tp_fp_fn_tn_binding, R"({"type": "bool", "args": 2, "return_tuple_size": 4, "reds": [{"tp": -1}, {"fp": -1}, {"fn": -1}, {"tn": -1}]})");
-    m.def("a_ab_ac_ad", &a_ab_ac_ad_binding, R"({"type":"float", "args": 4, "return_tuple_size": 4, "reds": [{"a": 0}, {"ab": [0, 1]}, {"ac": [0, 2]}, {"ad": [0, 3]}]})");
-    m.def("nan_inf_zero_psive", &nan_inf_zero_psive_binding, R"({"type": "float_debug", "args": 1, "return_tuple_size": 4, "reds": [{"nan": -1}, {"inf": -1}, {"zero": -1}, {"psive": -1}]})");
-    m.def("threshold", &threshold_binding, R"({"type": "float", "args": 1, "return_tuple_size": 4, "reds": [{"thresh0": [0, 1]}, {"thresh1": [0, 2]}, {"thresh2": [0, 3]}, {"thresh3": [0, 4]}], "extra_args": [0, 1, 2, 3]})");
+        metadata | {"type": "float", "args": 1, "return_tuple_size": 4, "reds": [{"thresh0": [0, 1]}, {"thresh1": [0, 2]}, {"thresh2": [0, 3]}, {"thresh3": [0, 4]}], "extra_args": [0, 1, 2, 3]})")
+        .def("threshold", py::overload_cast<torch::Tensor, int, int, int>(&threshold_binding))
+        .def("threshold", py::overload_cast<torch::Tensor, int, int>(&threshold_binding));
+
 }   
 
 

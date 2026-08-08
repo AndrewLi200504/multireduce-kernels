@@ -9,10 +9,13 @@
 #include "triple/triple_reduction.h"
 #include "quad/quad_reduction.h"
 #include "double/double_reduction_dual_mixmap_1.h"
+#include "double/double_reduction_single_constants.h"
 #include "triple/triple_reduction_dual_trimap.h"
+#include "triple/triple_reduction_single_constants.h"
 #include "quad/quad_reduction_dual_quadmap.h"
 #include "quad/quad_reduction_quad_mixmap.h"
 #include "quad/quad_reduction_single_input.h"
+#include "quad/quad_reduction_single_constants.h"
 void min_max_launcher(float* data, float* min, float* max, int n) {
     dual_reduction_launcher<float, dev_nop<float>, dev_nop<float>, dev_min<float>, dev_max<float>>(
         data, min, max, n, FLT_MAX, -FLT_MAX);
@@ -91,6 +94,23 @@ void nan_inf_zero_psive_launcher(float* data, int* nancnt, int* infcnt, int* zer
     dev_sum<int>, dev_sum<int>, dev_sum<int>, dev_sum<int>>(
         data, nancnt, infcnt, zerocnt, psivecnt, n, 0, 0, 0, 0
     );
+}
+
+void threshold_launcher(float* data, int threshold0, int threshold1, int* threshold0cnt, int* threshold1cnt, int n) {
+    dual_reduction_launcher<float, int, dev_threshold<float, int>, dev_threshold<float, int>,
+    dev_sum<int>, dev_sum<int>>(
+        data, threshold0, threshold1, threshold0cnt, threshold1cnt, n,
+        0, 0
+    );    
+}
+
+void threshold_launcher(float* data, int threshold0, int threshold1, int threshold2, 
+int* threshold0cnt, int* threshold1cnt, int* threshold2cnt, int n) {
+    triple_reduction_launcher<float, int, dev_threshold<float, int>, dev_threshold<float, int>, dev_threshold<float, int>,
+    dev_sum<int>, dev_sum<int>, dev_sum<int>>(
+        data, threshold0, threshold1, threshold2, threshold0cnt, threshold1cnt, threshold2cnt, n,
+        0, 0, 0
+    );    
 }
 
 void threshold_launcher(float* data, int threshold0, int threshold1, int threshold2, int threshold3, 

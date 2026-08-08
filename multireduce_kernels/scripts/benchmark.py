@@ -123,7 +123,7 @@ class Benchmark:
         self.non_tens_args = None
         if hasattr(mk, str): 
             self.mk_red = getattr(mk, str)
-            reduction_dict: dict = json.loads(self.mk_red.__doc__)
+            reduction_dict: dict = json.loads(self.mk_red.__doc__.split('|')[1])
             self.tens_init_fn = getattr(self, f"init_{reduction_dict['type']}")
             self.num_tens_args = reduction_dict["args"]
             for torch_red_dict in reduction_dict["reds"]:

@@ -1,7 +1,7 @@
 
-template<typename T, typename U, T (*Map0)(T, T), T (*Map1)(T, T), T (*Map2)(T, T), T (*Map3)(T, T),
+template<typename T, typename U, U (*Map0)(T, T), U (*Map1)(T, T), U (*Map2)(T, T), U (*Map3)(T, T),
 U (*Op0)(U, U), U (*Op1)(U, U), U (*Op2)(U, U), U (*Op3)(U, U)>
-__global__ void quad_reduction_kernel(const T* a, const T* b, quad_reduction<U>* blockqrs,
+__global__ void quad_reduction_kernel(const T* a, const T b, const T c, const T d, const T e, quad_reduction<U>* blockqrs,
                                         int n, T identity0, T identity1, T identity2, T identity3) {
     int tid = threadIdx.x;
     int i = blockIdx.x * blockDim.x + tid;
@@ -15,10 +15,10 @@ __global__ void quad_reduction_kernel(const T* a, const T* b, quad_reduction<U>*
     for (int k = 0; k < STRIDE; k++) {
         int currIdx = STRIDE * i + k;
         if (currIdx < n) {
-            qr.red0 = Op0(qr.red0, Map0(a[currIdx], b[currIdx])); 
-            qr.red1 = Op1(qr.red1, Map1(a[currIdx], b[currIdx]));
-            qr.red2 = Op2(qr.red2, Map2(a[currIdx], b[currIdx]));
-            qr.red3 = Op3(qr.red3, Map3(a[currIdx], b[currIdx]));
+            qr.red0 = Op0(qr.red0, Map0(a[currIdx], b)); 
+            qr.red1 = Op1(qr.red1, Map1(a[currIdx], c));
+            qr.red2 = Op2(qr.red2, Map2(a[currIdx], d));
+            qr.red3 = Op3(qr.red3, Map3(a[currIdx], e));
         } else {
             qr.red0 = Op0(qr.red0, identity0); 
             qr.red1 = Op1(qr.red1, identity1);
@@ -44,10 +44,11 @@ __global__ void quad_reduction_kernel(const T* a, const T* b, quad_reduction<U>*
 }
 
 
-template<typename T, typename U, T (*Map0)(T, T), T (*Map1)(T, T), T (*Map2)(T, T), T (*Map3)(T, T), U (*Op0)(U, U), U (*Op1)(U, U), U (*Op2)(U, U),
+template<typename T, typename U, U (*Map0)(T, T), U (*Map1)(T, T), U (*Map2)(T, T), U (*Map3)(T, T), U (*Op0)(U, U), U (*Op1)(U, U), U (*Op2)(U, U),
 U (*Op3)(U, U)>
-void quad_reduction_launcher(const T* data0, const T* data1, U* out0, U* out1, U* out2, U* out3, int n,
-                              T identity0, T identity1, T identity2, T identity3) {
+void quad_reduction_launcher(const T* data, const T b, const T c, const T d, const T e, 
+                            U* out0, U* out1, U* out2, U* out3, int n,
+                            U identity0, U identity1, U identity2, U identity3) {
     int current_n = n;
     int num_units = (current_n + STRIDE - 1) / STRIDE;
     int num_blocks = (num_units + BLOCK_SIZE - 1) / BLOCK_SIZE;
@@ -62,7 +63,7 @@ void quad_reduction_launcher(const T* data0, const T* data1, U* out0, U* out1, U
     }
 
     quad_reduction_kernel<T, U, Map0, Map1, Map2, Map3, Op0, Op1, Op2, Op3><<<num_blocks, BLOCK_SIZE>>>(
-        data0, data1, device_output, current_n, identity0, identity1, identity2, identity3);
+        data, b, c, d, e, device_output, current_n, identity0, identity1, identity2, identity3);
     current_n = num_blocks;
 
     while (current_n > BLOCK_SIZE) {

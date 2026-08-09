@@ -22,3 +22,10 @@ void threshold_launcher(float* data, int threshold0, int threshold1, int thresho
 int* threshold1cnt, int* threshold2cnt, int n);
 void threshold_launcher(float* data, int threshold0, int threshold1, int threshold2, int threshold3, 
 int* threshold0cnt, int* threshold1cnt, int* threshold2cnt, int* threshold3cnt, int n);
+void range_launcher(float* data, int lowerbound0, int upperbound0, int lowerbound1, int upperbound1,
+int* range0cnt, int* range1cnt, int n);
+void range_launcher(float* data, int lowerbound0, int upperbound0, int lowerbound1, int upperbound1,
+int lowerbound2, int upperbound2, int* range0cnt, int* range1cnt, int* range2cnt, int n);
+void range_launcher(float* data, int lowerbound0, int upperbound0, int lowerbound1, int upperbound1,
+int lowerbound2, int upperbound2, int lowerbound3, int upperbound3, int* range0cnt, int* range1cnt, 
+int* range2cnt, int* range3cnt, int n);

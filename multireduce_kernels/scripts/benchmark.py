@@ -1,6 +1,5 @@
 from argparse import ArgumentParser
 import torch
-import torch.distributions as dist
 import multireduce_kernels as mk
 import inspect
 import json
@@ -129,7 +128,14 @@ class Benchmark:
             for torch_red_dict in reduction_dict["reds"]:
                 self.torch_reds.append(TorchReduction.from_dict(torch_red_dict))
             extra_args = reduction_dict.get("extra_args")
-            self.non_tens_args = tuple(extra_args) if extra_args is not None else None
+            if extra_args is not None: 
+                tuplized_extra_args = []
+                for extra_arg in extra_args:
+                    if isinstance(extra_arg, list):
+                        tuplized_extra_args.append(list(extra_arg))
+                    else:
+                        tuplized_extra_args.append(extra_arg)
+            self.non_tens_args = tuple(tuplized_extra_args) if extra_args is not None else None
                         
         else:
             self.mk_red = getattr(mkw, str)

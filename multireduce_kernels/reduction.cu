@@ -10,12 +10,15 @@
 #include "quad/quad_reduction.h"
 #include "double/double_reduction_dual_mixmap_1.h"
 #include "double/double_reduction_single_constants.h"
+#include "double/double_reduction_double_constants.h"
 #include "triple/triple_reduction_dual_trimap.h"
 #include "triple/triple_reduction_single_constants.h"
+#include "triple/triple_reduction_double_constants.h"
 #include "quad/quad_reduction_dual_quadmap.h"
 #include "quad/quad_reduction_quad_mixmap.h"
 #include "quad/quad_reduction_single_input.h"
 #include "quad/quad_reduction_single_constants.h"
+#include "quad/quad_reduction_double_constants.h"
 void min_max_launcher(float* data, float* min, float* max, int n) {
     dual_reduction_launcher<float, dev_nop<float>, dev_nop<float>, dev_min<float>, dev_max<float>>(
         data, min, max, n, FLT_MAX, -FLT_MAX);
@@ -122,3 +125,30 @@ int* threshold0cnt, int* threshold1cnt, int* threshold2cnt, int* threshold3cnt, 
     );    
 }
 
+void range_launcher(float* data, int lowerbound0, int upperbound0, int lowerbound1, int upperbound1,
+    int* range0cnt, int* range1cnt, int n) {
+    dual_reduction_launcher<float, int, dev_range<float, int>, dev_range<float, int>,
+    dev_sum<int>, dev_sum<int>>(
+        data, lowerbound0, upperbound0, lowerbound1, upperbound1, range0cnt, range1cnt, n,
+        0, 0
+    );    
+}
+
+void range_launcher(float* data, int lowerbound0, int upperbound0, int lowerbound1, int upperbound1,
+    int lowerbound2, int upperbound2, int* range0cnt, int* range1cnt, int* range2cnt, int n) {
+    triple_reduction_launcher<float, int, dev_range<float, int>, dev_range<float, int>, dev_range<float, int>, 
+    dev_sum<int>, dev_sum<int>, dev_sum<int>>(
+        data, lowerbound0, upperbound0, lowerbound1, upperbound1, lowerbound2, upperbound2, 
+        range0cnt, range1cnt, range2cnt, n, 0, 0, 0
+    );    
+}
+
+void range_launcher(float* data, int lowerbound0, int upperbound0, int lowerbound1, int upperbound1,
+    int lowerbound2, int upperbound2, int lowerbound3, int upperbound3, int* range0cnt, int* range1cnt, 
+    int* range2cnt, int* range3cnt, int n) {
+    quad_reduction_launcher<float, int, dev_range<float, int>, dev_range<float, int>, dev_range<float, int>, 
+    dev_range<float, int>, dev_sum<int>, dev_sum<int>, dev_sum<int>, dev_sum<int>>(
+        data, lowerbound0, upperbound0, lowerbound1, upperbound1, lowerbound2, upperbound2, 
+        lowerbound3, upperbound3, range0cnt, range1cnt, range2cnt, range3cnt, n, 0, 0, 0, 0
+    );    
+}

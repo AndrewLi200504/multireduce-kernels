@@ -332,6 +332,111 @@ int threshold0, int threshold1, int threshold2, int threshold3) {
     return {threshold0cnt, threshold1cnt, threshold2cnt, threshold3cnt};
 }
 
+
+
+std::tuple<torch::Tensor, torch::Tensor> range_binding(torch::Tensor input, 
+std::tuple<int, int> range0, std::tuple<int, int> range1) {
+    TORCH_CHECK(input.is_cuda(), "must be cuda tensor");
+    int lowerbound0 = get<0>(range0);
+    int upperbound0 = get<1>(range0);
+    int lowerbound1 = get<0>(range1);
+    int upperbound1 = get<1>(range1);
+    TORCH_CHECK(lowerbound0 < upperbound0, "lower bound must be less than upper bound");
+    TORCH_CHECK(lowerbound1 < upperbound1, "lower bound must be less than upper bound");
+
+    auto range0cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto range1cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+
+    range_launcher(
+        input.data_ptr<float>(),
+        lowerbound0, 
+        upperbound0, 
+        lowerbound1,
+        upperbound1,
+        range0cnt.data_ptr<int>(),
+        range1cnt.data_ptr<int>(),
+        input.numel()
+    );
+    return {range0cnt, range1cnt};
+}
+
+
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor> range_binding(torch::Tensor input, 
+std::tuple<int, int> range0, std::tuple<int, int> range1, std::tuple<int, int> range2) {
+    TORCH_CHECK(input.is_cuda(), "must be cuda tensor");
+    int lowerbound0 = get<0>(range0);
+    int upperbound0 = get<1>(range0);
+    int lowerbound1 = get<0>(range1);
+    int upperbound1 = get<1>(range1);
+    int lowerbound2 = get<0>(range2);
+    int upperbound2 = get<1>(range2);
+    TORCH_CHECK(lowerbound0 < upperbound0, "lower bound must be less than upper bound");
+    TORCH_CHECK(lowerbound1 < upperbound1, "lower bound must be less than upper bound");
+    TORCH_CHECK(lowerbound2 < upperbound2, "lower bound must be less than upper bound");
+
+    auto range0cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto range1cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto range2cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+
+    range_launcher(
+        input.data_ptr<float>(),
+        lowerbound0, 
+        upperbound0, 
+        lowerbound1,
+        upperbound1,
+        lowerbound2, 
+        upperbound2,
+        range0cnt.data_ptr<int>(),
+        range1cnt.data_ptr<int>(),
+        range2cnt.data_ptr<int>(),
+
+        input.numel()
+    );
+    return {range0cnt, range1cnt, range2cnt};
+}
+
+std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor> range_binding(torch::Tensor input, 
+std::tuple<int, int> range0, std::tuple<int, int> range1, std::tuple<int, int> range2, std::tuple<int, int> range3) {
+    TORCH_CHECK(input.is_cuda(), "must be cuda tensor");
+    int lowerbound0 = get<0>(range0);
+    int upperbound0 = get<1>(range0);
+    int lowerbound1 = get<0>(range1);
+    int upperbound1 = get<1>(range1);
+    int lowerbound2 = get<0>(range2);
+    int upperbound2 = get<1>(range2);
+    int lowerbound3 = get<0>(range3);
+    int upperbound3 = get<1>(range3);
+    TORCH_CHECK(lowerbound0 < upperbound0, "lower bound must be less than upper bound");
+    TORCH_CHECK(lowerbound1 < upperbound1, "lower bound must be less than upper bound");
+    TORCH_CHECK(lowerbound2 < upperbound2, "lower bound must be less than upper bound");
+    TORCH_CHECK(lowerbound3 < upperbound3, "lower bound must be less than upper bound");
+
+    auto range0cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto range1cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto range2cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+    auto range3cnt = torch::empty({1}, input.options().dtype(torch::kInt));
+
+    range_launcher(
+        input.data_ptr<float>(),
+        lowerbound0, 
+        upperbound0, 
+        lowerbound1,
+        upperbound1,
+        lowerbound2, 
+        upperbound2,
+        lowerbound3,
+        upperbound3,
+        range0cnt.data_ptr<int>(),
+        range1cnt.data_ptr<int>(),
+        range2cnt.data_ptr<int>(),
+        range3cnt.data_ptr<int>(),
+
+        input.numel()
+    );
+    return {range0cnt, range1cnt, range2cnt, range3cnt};
+}
+
+
 PYBIND11_MODULE(multireduce_kernels, m) {
     py::options options;
     options.disable_function_signatures();
@@ -469,18 +574,35 @@ PYBIND11_MODULE(multireduce_kernels, m) {
             1. float32 tensor 
             2. integer threshold
             3. integer threshold
-            4. integer threshold
-            5. integer threshold
+            4. integer threshold (Optional)
+            5. integer threshold (Optional)
         Returns: 
             1. The number of values above threshold 1 in the tensor
             2. The number of values above threshold 2 in the tensor
-            3. The number of values above threshold 3 in the tensor
-            4. The number of values above threshold 4 in the tensor
+            3. The number of values above threshold 3 in the tensor (If at least 3 thresholds are provided)
+            4. The number of values above threshold 4 in the tensor (If 4 thresholds are provided)
 
         metadata | {"type": "float", "args": 1, "return_tuple_size": 4, "reds": [{"thresh0": [0, 1]}, {"thresh1": [0, 2]}, {"thresh2": [0, 3]}, {"thresh3": [0, 4]}], "extra_args": [0, 1, 2, 3]})")
-        .def("threshold", py::overload_cast<torch::Tensor, int, int, int>(&threshold_binding))
-        .def("threshold", py::overload_cast<torch::Tensor, int, int>(&threshold_binding));
+    .def("threshold", py::overload_cast<torch::Tensor, int, int, int>(&threshold_binding))
+    .def("threshold", py::overload_cast<torch::Tensor, int, int>(&threshold_binding));
+    m.def("range", py::overload_cast<torch::Tensor, std::tuple<int, int>, std::tuple<int, int>, std::tuple<int, int>,
+    std::tuple<int, int>>(&range_binding),
+    R"(
+    Accepts: 
+        1. float32 tensor 
+        2. 2 integer tuple range of form (lower_bound, upper_bound)
+        3. 2 integer tuple range of form (lower_bound, upper_bound)
+        4. 2 integer tuple range of form (lower_bound, upper_bound) (Optional)
+        5. 2 integer tuple range of form (lower_bound, upper_bound) (Optional)
+    Returns: 
+        1. The number of values within range 1 in the tensor
+        2. The number of values within range 2 in the tensor
+        3. The number of values within range 3 in the tensor (If at least 3 ranges are provided)
+        4. The number of values within range 4 in the tensor (If 4 ranges are provided)
 
+    metadata | {"type": "float", "args": 1, "return_tuple_size": 4, "reds": [{"range0": [0, 1]}, {"range1": [0, 2]}, {"range2": [0, 3]}, {"range3": [0, 4]}], "extra_args": [[-1, 0], [0, 1], [1, 2], [2, 3]]})")
+    .def("range", py::overload_cast<torch::Tensor, std::tuple<int, int>, std::tuple<int, int>, std::tuple<int, int>>(&range_binding))
+    .def("range", py::overload_cast<torch::Tensor, std::tuple<int, int>, std::tuple<int, int>>(&range_binding));
 }   
 
 

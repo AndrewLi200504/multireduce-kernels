@@ -63,9 +63,10 @@ def iou(t0, t1):
 def dice(t0, t1): 
     tp = intersection(t0, t1)
     return (2 * tp) / (2 * tp + fp(t0, t1) + fn(t0, t1) + EPS)
-def threshold(t0, thresh):
-    return (t0 > thresh).sum()
-
+def threshold(t, thresh):
+    return (t > thresh).sum()
+def range(t, interval):
+    return ((t > interval[0]) & (t < interval[1])).sum()
 SPECIAL_REDS = {
     "asq": sumsq,
     "ab": summul,
@@ -81,5 +82,9 @@ SPECIAL_REDS = {
     "thresh0": threshold,
     "thresh1": threshold,
     "thresh2": threshold,
-    "thresh3": threshold
+    "thresh3": threshold,
+    "range0": range,
+    "range1": range,
+    "range2": range,
+    "range3": range
 }
